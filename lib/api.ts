@@ -121,6 +121,46 @@ interface ReportRequest {
   isSharedWithParent?: boolean
 }
 
+// === ASSESSMENT TYPES ===
+interface AssessmentResponse {
+  assessmentId: string
+  childId: string
+  childName: string
+  psychologistId: string
+  psychologistName: string
+  assessmentDate: string
+  overallScore?: number
+  assessmentType: 'Milestones' | 'Barriers' | 'Transition'
+  createdAt: string
+  updatedAt?: string
+}
+
+interface MilestonesAssessmentRequest {
+  childId: string
+  assessmentDate: string
+  assessmentType: 'Milestones'
+  level1Score?: number
+  level2Score?: number
+  level3Score?: number
+  milestoneScores: Record<string, number>
+}
+
+interface BarriersAssessmentRequest {
+  childId: string
+  assessmentDate: string
+  assessmentType: 'Barriers'
+  barrierScores: Record<string, number>
+  qualitativeNotes?: string
+}
+
+interface TransitionAssessmentRequest {
+  childId: string
+  assessmentDate: string
+  assessmentType: 'Transition'
+  transitionScores: Record<string, number>
+  readinessNotes?: string
+}
+
 // Função para fazer requests com tratamento de erro melhorado
 async function apiRequest(endpoint: string, options: RequestInit = {}) {
   const url = `${API_BASE}${endpoint}`
@@ -304,5 +344,33 @@ export const api = {
         return response.blob()
       }
       return response
+    }),
+
+  // Assessments endpoints
+  getAssessment: (id: string): Promise<AssessmentResponse> =>
+    apiRequest(`/Assessments/${id}`),
+
+  getAssessmentsByChild: (childId: string): Promise<AssessmentResponse[]> =>
+    apiRequest(`/Assessments/child/${childId}`),
+
+  getProgressData: (childId: string): Promise<Record<string, any>> =>
+    apiRequest(`/Assessments/child/${childId}/progress`),
+
+  createMilestonesAssessment: (data: MilestonesAssessmentRequest): Promise<AssessmentResponse> =>
+    apiRequest('/Assessments/milestones', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  createBarriersAssessment: (data: BarriersAssessmentRequest): Promise<AssessmentResponse> =>
+    apiRequest('/Assessments/barriers', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  createTransitionAssessment: (data: TransitionAssessmentRequest): Promise<AssessmentResponse> =>
+    apiRequest('/Assessments/transition', {
+      method: 'POST',
+      body: JSON.stringify(data),
     }),
 }

@@ -117,20 +117,21 @@ GET /api/Children/{id}/can-access - Verificar acesso
 - ✅ **Módulo Reports 100% integrado** - Geração + PDF + estatísticas
 - ✅ **Download de PDF automático** - Backend gera PDF de relatórios
 - ✅ **Estatísticas integradas** - Sessões, avaliações, metas por período
+- ✅ **Módulo Assessments 100% integrado** - VB-MAPP completo
+- ✅ **3 tipos de avaliação** - Milestones, Barriers, Transition
+- ✅ **Progress data endpoint** - Dados de progresso consolidados
+- ✅ **Cálculo automático de scores** - Backend calcula overallScore
 
 ### 🔄 Em Progresso
-- Sistema de Avaliações VB-MAPP (próximo módulo)
-- Atividades Terapêuticas (próximo módulo)
+- Atividades Terapêuticas (backend não existe endpoint)
 
 ### ❌ Com Problemas
 - Role validation (PT-BR não aceito) - usar sempre roles em inglês
 - primaryParentId: ✅ **IDENTIFICADO E RESOLVIDO** - requer Parent válido no sistema
 
 ### ⏳ Não Testado
-- Sistema de avaliações VB-MAPP
 - Planos de intervenção
 - Sistema de comunicação
-- Relatórios
 
 ## 📊 Estrutura VB-MAPP Descoberta (baseada no PDF)
 
@@ -175,14 +176,27 @@ Child → parentID (FK para Parent)
    - Controle de acesso funcionando ✅
    - Mapeamento frontend-backend ✅
 
+4. **✅ COMPLETADO - Módulo Assessments (VB-MAPP)**
+   - **Data**: 23/09/2025
+   - **Endpoints integrados**:
+     - `GET /api/Assessments/{id}` - Buscar assessment específico
+     - `GET /api/Assessments/child/{childId}` - Buscar por criança
+     - `GET /api/Assessments/child/{childId}/progress` - Dados de progresso
+     - `POST /api/Assessments/milestones` - Criar avaliação de marcos
+     - `POST /api/Assessments/barriers` - Criar avaliação de barreiras
+     - `POST /api/Assessments/transition` - Criar avaliação de transição
+   - **3 tipos de avaliação**:
+     - **Milestones**: 170 marcos em 3 níveis (Level 1, 2, 3)
+     - **Barriers**: 24 barreiras ao aprendizado (escala 0-4)
+     - **Transition**: Prontidão para transição educacional
+   - **Mapeamento completo**: `AssessmentResponse ↔ Assessment`
+   - **Cálculo automático**: Backend calcula `overallScore`
+   - **Store híbrido**: `assessment-store.ts` com padrão API + mock
+   - **Teste validado**: `test-assessments-integration.js` ✅
+
 ## 🚀 Próximas Funcionalidades para Integrar
 
-1. **Sistema de Avaliações VB-MAPP**
-   - Endpoints `/api/Assessments/*`
-   - 170 marcos em 3 níveis
-   - 24 barreiras de desenvolvimento
-
-2. **Planos de Intervenção**
+1. **Planos de Intervenção**
    - Endpoints `/api/InterventionPlans/*`
    - Objetivos terapêuticos
    - Estratégias específicas
