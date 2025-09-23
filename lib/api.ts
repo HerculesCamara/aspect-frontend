@@ -82,6 +82,45 @@ interface SessionUpdateRequest {
   isSharedWithParent?: boolean
 }
 
+// === REPORT TYPES ===
+interface ReportStatistics {
+  totalSessions: number
+  totalAssessments: number
+  assessmentsByType: Record<string, number>
+  sessionsByType: Record<string, number>
+  achievedGoals: string[]
+  activeGoals: string[]
+}
+
+interface ReportResponse {
+  reportId: string
+  childId: string
+  childName: string
+  psychologistId: string
+  psychologistName: string
+  reportDate: string
+  reportType: string
+  filePath?: string
+  summaryForParent?: string
+  clinicalNotes?: string
+  startPeriod: string
+  endPeriod: string
+  isSharedWithParent: boolean
+  createdAt: string
+  updatedAt?: string
+  statistics: ReportStatistics
+}
+
+interface ReportRequest {
+  childId: string
+  startPeriod: string
+  endPeriod: string
+  reportType: string
+  summaryForParent?: string
+  clinicalNotes?: string
+  isSharedWithParent?: boolean
+}
+
 // Função para fazer requests com tratamento de erro melhorado
 async function apiRequest(endpoint: string, options: RequestInit = {}) {
   const url = `${API_BASE}${endpoint}`
@@ -237,5 +276,33 @@ export const api = {
     apiRequest(`/Sessions/${id}/share`, {
       method: 'PATCH',
       body: JSON.stringify(share),
+    }),
+
+  // Reports endpoints
+  getReport: (id: string): Promise<ReportResponse> =>
+    apiRequest(`/Reports/${id}`),
+
+  getReportsByChild: (childId: string): Promise<ReportResponse[]> =>
+    apiRequest(`/Reports/child/${childId}`),
+
+  createReport: (reportData: ReportRequest): Promise<ReportResponse> =>
+    apiRequest('/Reports', {
+      method: 'POST',
+      body: JSON.stringify(reportData),
+    }),
+
+  shareReportWithParent: (id: string, share: boolean): Promise<{ message: string }> =>
+    apiRequest(`/Reports/${id}/share`, {
+      method: 'PATCH',
+      body: JSON.stringify(share),
+    }),
+
+  downloadReportPdf: (id: string): Promise<Blob> =>
+    apiRequest(`/Reports/${id}/pdf`).then(response => {
+      // Para downloads de PDF, retornamos o blob
+      if (response instanceof Response) {
+        return response.blob()
+      }
+      return response
     }),
 }

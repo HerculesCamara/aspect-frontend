@@ -114,6 +114,9 @@ GET /api/Children/{id}/can-access - Verificar acesso
 - ✅ **Módulo Sessions 100% integrado** - CRUD completo + compartilhamento
 - ✅ **Sistema de notas estruturadas** - O que foi feito, diagnosticado, próximos passos
 - ✅ **Controle de compartilhamento** - Psicólogo decide quais sessões pais veem
+- ✅ **Módulo Reports 100% integrado** - Geração + PDF + estatísticas
+- ✅ **Download de PDF automático** - Backend gera PDF de relatórios
+- ✅ **Estatísticas integradas** - Sessões, avaliações, metas por período
 
 ### 🔄 Em Progresso
 - Sistema de Avaliações VB-MAPP (próximo módulo)
