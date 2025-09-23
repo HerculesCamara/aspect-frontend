@@ -14,6 +14,15 @@ interface RegisterRequest {
   firstName: string
   lastName: string
   role: 'Psychologist' | 'Parent'
+  contactNumber?: string
+
+  // Campos específicos para Psicólogo
+  licenseNumber?: string
+  specialization?: string
+  clinicName?: string
+
+  // Campos específicos para Parent
+  childRelationship?: string
 }
 
 interface AuthResponse {
