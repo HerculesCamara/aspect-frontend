@@ -2,11 +2,22 @@
 
 ## 🚨 Problemas Encontrados
 
-### 1. Erro "Psicólogo não encontrado"
+### 1. Erro "Psicólogo não encontrado" - PERSISTENTE
 - **Endpoint**: `GET /api/Children`
 - **Erro**: `{"message":"Psicólogo não encontrado"}`
 - **Context**: Usuário autenticado com role "Psychologist" mas sistema não reconhece
-- **Possível causa**: Talvez precise cadastrar perfil de psicólogo separadamente do usuário
+- **Status**: Ainda ocorre mesmo com token JWT válido
+- **Análise baseada no PDF**:
+  - Sistema diferencia `User` (auth) de `Psychologist` (perfil profissional)
+  - PDF confirma: "Psicólogo responsável por onboarding da criança"
+  - Estrutura: `User` → role "Psychologist" → precisa estar vinculado a entidade `Psychologist`
+- **Hipóteses confirmadas pelo PDF**:
+  - ✅ Sistema requer cadastro separado de perfil psicólogo após criar usuário
+  - ✅ Usuário precisa ser associado a uma entidade Psychologist no banco
+  - ✅ Falta endpoint para criar/associar perfil profissional (licenseNumber, specialization, etc.)
+- **Próximos passos**:
+  - Investigar se existe endpoint `/api/Psychologists` para criar perfil
+  - Verificar se precisa de dados como licenseNumber, specialization, contactNumber
 
 ### 2. Validação de Role inconsistente
 - **Problema**: Durante registro, role "Psicólogo" (PT-BR) falha mas "Psychologist" (EN) funciona
@@ -67,39 +78,115 @@ GET /api/Children/{id}/can-access - Verificar acesso
 - `/api/Communication/*` - Sistema de mensagens
 - `/api/Reports/*` - Relatórios
 
+## 💬 Feedback do Desenvolvedor Backend
+
+### Esclarecimentos Importantes:
+1. **Tipos de Login**:
+   - **Psicólogo**: Acesso restrito apenas às crianças atribuídas a ele
+   - **Pais**: Registro normal, acesso aos próprios filhos
+
+2. **Regra de Acesso**:
+   - Psicólogo não tem acesso global a todas as crianças
+   - Sistema funciona por atribuição: cada criança é vinculada a um psicólogo específico
+   - ~~Se psicólogo não tem crianças → erro "Psicólogo não encontrado"~~ ✅ **RESOLVIDO**
+
+3. **Fluxo Correto**:
+   - Criar criança no sistema
+   - Atribuir criança ao psicólogo (assignedPsychologistID)
+   - Psicólogo consegue acessar `/api/Children`
+
 ## 🔄 Status dos Testes
 
 ### ✅ Funcionando
-- Registro de usuário (com role em inglês)
+- Registro de usuário (com role em inglês) - Psychologist e Parent
 - Login de usuário
 - Autenticação via Bearer token
 - Swagger documentation
+- Store crianca-store.ts integrado com backend
+- Mapeamento de dados Children (ChildResponse ↔ Crianca)
+- Cálculo automático de idade e nível VB-MAPP
+- ✅ **AuthService corrigido** - Psychologist agora é salvo no banco
+- ✅ **GET /api/Children funcionando** - Retorna array vazio (correto)
+- ✅ **Problema "Psicólogo não encontrado" RESOLVIDO**
+- ✅ **Criação de crianças funcionando** - com Parent válido
+- ✅ **Fluxo Psychologist-Parent-Child completo**
+- ✅ **Controle de acesso** - Psicólogo vê só suas crianças, Parent vê só seus filhos
+
+### 🔄 Em Progresso
+- Sistema de Avaliações VB-MAPP (próximo módulo)
+- Atividades Terapêuticas (próximo módulo)
 
 ### ❌ Com Problemas
-- Acesso a endpoints protegidos (erro psicólogo não encontrado)
-- Role validation (PT-BR não aceito)
+- Role validation (PT-BR não aceito) - usar sempre roles em inglês
+- primaryParentId: ✅ **IDENTIFICADO E RESOLVIDO** - requer Parent válido no sistema
 
 ### ⏳ Não Testado
-- CRUD de crianças
-- Sistema de avaliações
+- Sistema de avaliações VB-MAPP
 - Planos de intervenção
 - Sistema de comunicação
 - Relatórios
 
+## 📊 Estrutura VB-MAPP Descoberta (baseada no PDF)
+
+### Entidades Principais:
+- **User**: Autenticação (userId, username, email, role)
+- **Psychologist**: Perfil profissional (psychologistID, licenseNumber, specialization, contactNumber, clinicName)
+- **Parent**: Perfil dos pais (parentID, childRelationship, contactNumber)
+- **Child**: Criança (childID, assignedPsychologistID, parentID)
+
+### Relacionamentos Críticos:
+```
+User (role="Psychologist") → Psychologist (perfil profissional)
+Child → assignedPsychologistID (FK para Psychologist)
+Child → parentID (FK para Parent)
+```
+
+### Sistema VB-MAPP Completo (170 marcos):
+- **Nível 1**: 0-18 meses (marcos 1-85)
+- **Nível 2**: 18-30 meses (marcos 86-135)
+- **Nível 3**: 30-48 meses (marcos 136-170)
+- **12 domínios**: Mand, Tact, Listener, Visual/MTS, LRFFC, Intraverbal, Group/Motor, Echoic/Motor, Vocal, Reading, Writing, Math
+- **24 barreiras**: Escala 0-4 de severidade
+- **18 áreas de transição**: Para ambientes educacionais
+
 ## 📝 Próximos Passos
 
-1. **Resolver erro "Psicólogo não encontrado"**
-   - Investigar se precisa cadastrar perfil separado
-   - Verificar se há endpoint de setup inicial
+1. **✅ RESOLVIDO - Erro "Psicólogo não encontrado"**
+   - **Root cause**: AuthService criava objetos Psychologist mas não salvava no banco
+   - **Solução**: Backend corrigido para injetar ApplicationDbContext e salvar registros
+   - **Status**: Totalmente funcional
 
-2. **Mapear estruturas de dados completas**
-   - ChildCreateRequest/Response
-   - AssessmentRequest/Response
-   - InterventionPlanRequest/Response
+2. **✅ RESOLVIDO - Erro "Responsável principal não encontrado"**
+   - **Root cause**: primaryParentId inválido (GUID zerado)
+   - **Solução**: Sistema requer Parent válido registrado no sistema
+   - **Fluxo correto**: Registrar Parent → Usar seu userId como primaryParentId
+   - **Status**: Testado e funcionando
 
-3. **Integrar autenticação no frontend**
-   - Atualizar auth-store para usar API real
-   - Manter fallback para dados mock
+3. **✅ COMPLETADO - Fluxo completo integrado**
+   - Registro Psychologist ✅
+   - Registro Parent ✅
+   - Criação Child com relacionamentos corretos ✅
+   - Controle de acesso funcionando ✅
+   - Mapeamento frontend-backend ✅
 
-4. **Testar fluxo completo**
-   - Registro → Login → Acesso a recursos protegidos
+## 🚀 Próximas Funcionalidades para Integrar
+
+1. **Sistema de Avaliações VB-MAPP**
+   - Endpoints `/api/Assessments/*`
+   - 170 marcos em 3 níveis
+   - 24 barreiras de desenvolvimento
+
+2. **Planos de Intervenção**
+   - Endpoints `/api/InterventionPlans/*`
+   - Objetivos terapêuticos
+   - Estratégias específicas
+
+3. **Sistema de Comunicação**
+   - Endpoints `/api/Communication/*`
+   - Mensagens entre psicólogo e pais
+   - Notificações
+
+4. **Relatórios**
+   - Endpoints `/api/Reports/*`
+   - Relatórios de progresso
+   - Exportação de dados

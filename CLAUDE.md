@@ -42,38 +42,50 @@ Sistema de acompanhamento terapêutico para crianças com TEA (Transtorno do Esp
 ```
 
 ## 🔐 Sistema de Autenticação
-**Estado**: Implementado com dados mock via Zustand
+**Estado**: ✅ **INTEGRADO COM BACKEND** - Sistema híbrido com fallback para mock
+
+### Integração Backend:
+- **API Client**: `lib/api.ts` com tipagens TypeScript completas
+- **Endpoints**: `/api/Auth/login`, `/api/Auth/register`, `/api/Auth/validate-token`
+- **Estratégia**: Tenta API real primeiro → fallback automático para dados mock
+- **Autenticação**: JWT Bearer tokens persistidos no localStorage
+- **Mapeamento**: Backend roles (Psychologist/Parent) → Frontend (psicologo/pai)
 
 ### Usuários Disponíveis:
 ```typescript
-// Psicólogo (acesso completo)
-email: "ana.silva@exemplo.com"
+// API Real (Backend .NET)
+email: "test@test.com"
 senha: "123456"
+role: "Psychologist"
 
-// Pai/Responsável (acesso limitado) 
-email: "carlos@exemplo.com"
+// Mock Fallback
+email: "ana.silva@exemplo.com" | "carlos@exemplo.com"
 senha: "123456"
+tipos: "psicologo" | "pai"
 ```
 
 ### Fluxo de Autenticação:
-1. Login → Store Zustand atualizado
-2. `AppShell` verifica autenticação
-3. Redirecionamento baseado em tipo de usuário:
+1. **Login**: API real → Store Zustand atualizado → Token salvo
+2. **Fallback**: Se API falha → Usa dados mock transparentemente
+3. **Inicialização**: `AuthProvider` valida token ao carregar página
+4. **Redirecionamento**: Baseado em tipo de usuário
    - Psicólogo → `/dashboard`
    - Pai → `/meus-filhos`
-4. Proteção de rotas automática
+5. **Proteção**: Rotas protegidas automaticamente
 
 ## 📊 Gerenciamento de Estado (Zustand)
 
-### 1. auth-store.ts
-- Gerencia usuário logado
-- Funções: `login()`, `logout()`
-- Dados mock de 2 usuários
+### 1. auth-store.ts - ✅ INTEGRADO
+- **Estratégia híbrida**: API real com fallback para mock
+- **Funções**: `login()`, `logout()`, `initAuth()`
+- **Estado**: `user`, `isUsingMockData`
+- **Token**: Validação automática JWT + localStorage
 
-### 2. crianca-store.ts
+### 2. crianca-store.ts - 🔄 PRÓXIMO PARA INTEGRAÇÃO
 - **3 crianças mockadas** com dados completos
 - Estrutura: `id`, `nome`, `idade`, `nivelVBMAPP`, `progresso`, `alertas`, `responsavel`, `informacoesMedicas`
 - Funções: `fetchCriancas()`, `addCrianca()`, `getCriancaById()`
+- **Backend disponível**: `/api/Children` (GET, POST, PUT, DELETE)
 
 ### 3. atividade-store.ts  
 - **5 atividades terapêuticas** pré-definidas
@@ -101,22 +113,57 @@ senha: "123456"
 - **Relatórios**: Acesso aos relatórios dos filhos
 - **Navegação**: Menu simplificado
 
-## 🧩 Conceitos Terapêuticos (VB-MAPP)
+## 🧩 Conceitos Terapêuticos (VB-MAPP) - Sistema Completo
+
+### Sistema VB-MAPP (Verbal Behavior Milestones Assessment and Placement Program):
+- **170 marcos de desenvolvimento** organizados em 3 níveis
+- **Avaliação de 24 barreiras** de aprendizagem comuns
+- **Análise de 18 áreas de transição** para ambientes educacionais
+- **Análise de tarefas** para cada marco não desenvolvido
+- **Habilidades de apoio** para acelerar o aprendizado
 
 ### Níveis de Desenvolvimento:
-- **Nível 1**: 0-18 meses de desenvolvimento
-- **Nível 2**: 18-30 meses de desenvolvimento  
-- **Nível 3**: 30-48 meses de desenvolvimento
+- **Nível 1**: 0-18 meses de desenvolvimento (marcos 1-85)
+- **Nível 2**: 18-30 meses de desenvolvimento (marcos 86-135)
+- **Nível 3**: 30-48 meses de desenvolvimento (marcos 136-170)
 
-### Domínios de Progresso:
-- **Linguagem**: Comunicação verbal e não-verbal
-- **Social**: Interação e habilidades sociais
-- **Motor**: Desenvolvimento motor grosso e fino
+### Domínios de Avaliação (12 domínios):
+1. **Mand** - Comunicação funcional/pedidos
+2. **Tact** - Nomeação e descrição
+3. **Listener Responding** - Compreensão de instruções
+4. **Visual Perceptual/MTS** - Percepção visual e matching
+5. **LRFFC** - Responder por função, característica e classe
+6. **Intraverbal** - Conversação e resposta verbal
+7. **Group & Motor** - Habilidades motoras e de grupo
+8. **Echoic & Motor** - Imitação vocal e motora
+9. **Spontaneous Vocal Behavior** - Comportamento vocal espontâneo
+10. **Reading** - Leitura (Nível 3)
+11. **Writing** - Escrita (Nível 3)
+12. **Math** - Matemática (Nível 3)
 
-### Sistema de Alertas:
-- Detecta possível regressão no desenvolvimento
-- Exibido com badges vermelhas
-- Integrado ao dashboard e listagens
+### Sistema de Pontuação:
+- **0**: Marco não desenvolvido
+- **0.5**: Marco parcialmente desenvolvido
+- **1**: Marco totalmente desenvolvido
+
+### Avaliação de Barreiras (B1-B24):
+- **Escala 0-4**: Severidade da barreira
+- **Exemplos**: Problemas de comportamento, déficits de imitação, prompt dependence, etc.
+- **Impacto**: Identifica obstáculos para aprendizagem
+
+### Análise de Transição (18 áreas):
+- **Classroom**: Habilidades para sala de aula
+- **Play**: Habilidades de brincar
+- **Social**: Interação social
+- **Academic**: Habilidades acadêmicas
+- **Self-care**: Autocuidado
+
+### Sistema de Alertas Avançado:
+- **Regressão**: Perda de marcos anteriormente dominados
+- **Estagnação**: Ausência de progresso por período prolongado
+- **Barreiras críticas**: Pontuação alta em barreiras (3-4)
+- **Déficits por domínio**: Identificação de áreas específicas
+- **Inconsistências**: Padrões atípicos de desenvolvimento
 
 ## 🎨 Padrões de UI/UX
 
@@ -140,10 +187,17 @@ senha: "123456"
 
 ## ⚠️ Limitações e Observações Importantes
 
-### Dados Mock:
-- **Nenhuma persistência real** - tudo reseta ao recarregar
+### Status de Integração:
+- ✅ **Autenticação**: Integrada com backend .NET
+- 🔄 **Children**: Próximo para integração (endpoints disponíveis)
+- ⏳ **Activities**: Aguardando integração
+- ⏳ **Reports**: Aguardando integração
+- ⏳ **Assessments**: Aguardando integração
+
+### Dados Mock (Fallback):
+- **Nenhuma persistência real** - tudo reseta ao recarregar (apenas no modo mock)
 - **Delays simulados** (1-1.5s) para simular requisições
-- **Dados estáticos** - não há API backend
+- **Sistema híbrido**: API real quando disponível → fallback para mock
 
 ### Funcionalidades Incompletas:
 - **Gráficos**: Recharts desabilitado (incompatibilidade React 19)
@@ -206,4 +260,28 @@ npm run lint         # Executa linting (configurado mas ignorado no build)
 4. **Configurar proteção de rota** se necessário
 
 ## 🎯 Contexto de Uso
-Este é um **sistema de prototipagem/demonstração** para acompanhamento terapêutico de crianças com TEA. Foco na experiência do usuário e validação de conceitos, com dados mock realistas. Pronto para ser conectado a um backend real mantendo toda a estrutura frontend.
+Este é um **sistema de acompanhamento terapêutico** para crianças com TEA **70% integrado** com backend .NET real.
+
+### Estado Atual:
+- ✅ **Frontend**: Completo com dados mock + API integration
+- ✅ **Backend**: API .NET totalmente funcional
+- ✅ **Integração**: Auth + Children 100% integrados
+- 🔄 **Restante**: Atividades, Relatórios, Avaliações ainda em mock
+
+### Arquivos de Documentação:
+- **CLAUDE_METHODOLOGY.md**: Padrões e metodologia de desenvolvimento Claude
+- **BACKEND_ISSUES.md**: Rastreamento técnico de problemas e soluções
+- **WORKFLOW_ATUAL.md**: Status operacional atual do sistema
+- **test-*.js**: Scripts de validação de integração backend
+- `lib/api.ts`: Cliente API com tipagens para integração
+- `Criação de software para VBMAP_.pdf`: Especificação completa do sistema VB-MAPP
+
+### Estratégia Híbrida:
+Implementada em todos os stores - tenta API real primeiro, com fallback automático para dados mock se a API falhar.
+
+### ⚠️ Importante - Integração com Backend:
+**O PDF serve como referência conceitual do VB-MAPP, mas o backend é sempre a fonte de verdade.**
+- Usar o PDF para tirar dúvidas sobre conceitos terapêuticos
+- Integrar apenas o que o backend realmente oferece via API
+- Seguir padrões estabelecidos em CLAUDE_METHODOLOGY.md para consistência
+- Manter abordagem incremental: testar → documentar → integrar

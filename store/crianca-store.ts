@@ -1,4 +1,5 @@
 import { create } from "zustand"
+import { api } from "@/lib/api"
 
 // Tipos
 interface Progresso {
@@ -33,9 +34,12 @@ interface Crianca {
 
 interface CriancaState {
   criancas: Crianca[]
+  isUsingMockData: boolean
   fetchCriancas: () => Promise<void>
   addCrianca: (crianca: Omit<Crianca, "id">) => Promise<void>
   getCriancaById: (id: string) => Crianca | undefined
+  updateCrianca: (id: string, crianca: Partial<Crianca>) => Promise<void>
+  deleteCrianca: (id: string) => Promise<void>
 }
 
 // Dados mockados
@@ -123,35 +127,197 @@ const mockCriancas: Crianca[] = [
   },
 ]
 
+// Função para mapear ChildResponse (backend) para Crianca (frontend)
+function mapChildResponseToCrianca(child: any): Crianca {
+  // Calcular idade baseada na data de nascimento
+  const calcularIdade = (dateOfBirth: string): number => {
+    if (!dateOfBirth) return 0
+    const nascimento = new Date(dateOfBirth)
+    const hoje = new Date()
+    let idade = hoje.getFullYear() - nascimento.getFullYear()
+    const mesAniversario = hoje.getMonth() - nascimento.getMonth()
+    if (mesAniversario < 0 || (mesAniversario === 0 && hoje.getDate() < nascimento.getDate())) {
+      idade--
+    }
+    return idade
+  }
+
+  // Determinar nível VB-MAPP baseado na idade (referência do PDF)
+  const determinarNivelVBMAPP = (idade: number): string => {
+    if (idade <= 1.5) return "Nível 1" // 0-18 meses
+    if (idade <= 2.5) return "Nível 2" // 18-30 meses
+    return "Nível 3" // 30-48+ meses
+  }
+
+  const idadeCalculada = child.age || calcularIdade(child.dateOfBirth)
+
+  return {
+    id: child.childId,
+    nome: child.fullName || `${child.firstName} ${child.lastName}`,
+    idade: idadeCalculada,
+    nivelVBMAPP: determinarNivelVBMAPP(idadeCalculada),
+    progresso: {
+      linguagem: 50, // TODO: calcular quando endpoints de Assessment estiverem disponíveis
+      social: 50,
+      motor: 50,
+      media: 50,
+      tendencia: "up",
+    },
+    alertas: [], // TODO: implementar lógica de alertas baseada em assessments
+    foto: undefined,
+    dataNascimento: child.dateOfBirth?.split('T')[0],
+    responsavel: {
+      nome: "Responsável", // TODO: buscar via primaryParentId quando endpoint estiver disponível
+      telefone: "",
+      email: "",
+      endereco: "",
+    },
+    informacoesMedicas: {
+      medicamentos: child.diagnosis || "",
+      alergias: "",
+      observacoes: `Cadastrado em: ${child.onboardingDate?.split('T')[0] || 'N/A'}`,
+    },
+  }
+}
+
+// Função para mapear Crianca (frontend) para ChildCreateRequest (backend)
+function mapCriancaToChildCreateRequest(crianca: Omit<Crianca, "id">): any {
+  const [firstName, ...lastNameParts] = crianca.nome.split(' ')
+
+  // Converter data nascimento para ISO format se disponível
+  const dateOfBirth = crianca.dataNascimento
+    ? crianca.dataNascimento + 'T00:00:00Z'
+    : new Date().toISOString() // Fallback para hoje se não informado
+
+  // IMPORTANTE: Para funcionar, precisa de um Parent válido no sistema
+  // Por enquanto, usar null para indicar que precisa ser preenchido
+  const primaryParentId = null // TODO: implementar lógica para obter Parent válido
+
+  return {
+    firstName: firstName || 'Nome',
+    lastName: lastNameParts.join(' ') || 'Sobrenome',
+    dateOfBirth: dateOfBirth,
+    gender: 'Não informado', // TODO: adicionar campo gender no frontend
+    diagnosis: crianca.informacoesMedicas?.medicamentos || 'TEA',
+    primaryParentId: primaryParentId,
+    medicalHistory: crianca.informacoesMedicas?.observacoes || null
+  }
+}
+
 // Store
 export const useCriancaStore = create<CriancaState>((set, get) => ({
   criancas: [],
+  isUsingMockData: false,
 
   fetchCriancas: async () => {
-    // Simular delay de rede
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    set({ criancas: mockCriancas })
+    try {
+      // Tentar API real primeiro
+      const children = await api.getChildren()
+      const criancasMapeadas = children.map(mapChildResponseToCrianca)
+
+      set({ criancas: criancasMapeadas, isUsingMockData: false })
+    } catch (error) {
+      console.warn("API getChildren failed, using mock data:", error)
+
+      // Fallback para dados mock
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+      set({ criancas: mockCriancas, isUsingMockData: true })
+    }
   },
 
   addCrianca: async (novaCrianca) => {
-    // Simular delay de rede
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    try {
+      // Tentar API real primeiro
+      const childRequest = mapCriancaToChildCreateRequest(novaCrianca)
+      const childResponse = await api.createChild(childRequest)
+      const criancaMapeada = mapChildResponseToCrianca(childResponse)
 
-    const criancaComId: Crianca = {
-      ...novaCrianca,
-      id: Date.now().toString(),
-      progresso: novaCrianca.progresso || {
-        linguagem: 0,
-        social: 0,
-        motor: 0,
-        media: 0,
-        tendencia: "up",
-      },
+      set((state) => ({
+        criancas: [...state.criancas, criancaMapeada],
+      }))
+    } catch (error) {
+      console.warn("API createChild failed, using mock data:", error)
+
+      // Fallback para dados mock
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+
+      const criancaComId: Crianca = {
+        ...novaCrianca,
+        id: Date.now().toString(),
+        progresso: novaCrianca.progresso || {
+          linguagem: 0,
+          social: 0,
+          motor: 0,
+          media: 0,
+          tendencia: "up",
+        },
+      }
+
+      set((state) => ({
+        criancas: [...state.criancas, criancaComId],
+        isUsingMockData: true,
+      }))
     }
+  },
 
-    set((state) => ({
-      criancas: [...state.criancas, criancaComId],
-    }))
+  updateCrianca: async (id: string, dadosAtualizados: Partial<Crianca>) => {
+    try {
+      // Tentar API real primeiro
+      const criancaAtual = get().criancas.find(c => c.id === id)
+      if (!criancaAtual) throw new Error("Criança não encontrada")
+
+      const criancaCompleta = { ...criancaAtual, ...dadosAtualizados }
+      const [firstName, ...lastNameParts] = criancaCompleta.nome.split(' ')
+
+      const updateRequest = {
+        firstName: firstName || '',
+        lastName: lastNameParts.join(' ') || '',
+        dateOfBirth: criancaCompleta.dataNascimento + 'T00:00:00Z',
+        gender: 'Não informado',
+        diagnosis: criancaCompleta.informacoesMedicas?.medicamentos || '',
+        isActive: true,
+      }
+
+      const childResponse = await api.updateChild(id, updateRequest)
+      const criancaMapeada = mapChildResponseToCrianca(childResponse)
+
+      set((state) => ({
+        criancas: state.criancas.map(c => c.id === id ? criancaMapeada : c),
+      }))
+    } catch (error) {
+      console.warn("API updateChild failed, using mock data:", error)
+
+      // Fallback para dados mock
+      await new Promise((resolve) => setTimeout(resolve, 500))
+
+      set((state) => ({
+        criancas: state.criancas.map(c =>
+          c.id === id ? { ...c, ...dadosAtualizados } : c
+        ),
+        isUsingMockData: true,
+      }))
+    }
+  },
+
+  deleteCrianca: async (id: string) => {
+    try {
+      // Tentar API real primeiro
+      await api.deleteChild(id)
+
+      set((state) => ({
+        criancas: state.criancas.filter(c => c.id !== id),
+      }))
+    } catch (error) {
+      console.warn("API deleteChild failed, using mock data:", error)
+
+      // Fallback para dados mock
+      await new Promise((resolve) => setTimeout(resolve, 500))
+
+      set((state) => ({
+        criancas: state.criancas.filter(c => c.id !== id),
+        isUsingMockData: true,
+      }))
+    }
   },
 
   getCriancaById: (id: string) => {

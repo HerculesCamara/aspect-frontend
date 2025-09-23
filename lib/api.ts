@@ -78,6 +78,40 @@ async function apiRequest(endpoint: string, options: RequestInit = {}) {
   return response.json()
 }
 
+// Tipagens para Children baseadas no backend
+interface ChildResponse {
+  childId: string
+  firstName: string
+  lastName: string
+  fullName: string
+  dateOfBirth: string
+  age: number
+  gender: string
+  diagnosis?: string
+  onboardingDate: string
+  isActive: boolean
+  assignedPsychologistId: string
+  psychologistName?: string
+}
+
+interface ChildCreateRequest {
+  firstName: string
+  lastName: string
+  dateOfBirth: string
+  gender: string
+  diagnosis?: string
+  primaryParentId: string
+}
+
+interface ChildUpdateRequest {
+  firstName: string
+  lastName: string
+  dateOfBirth: string
+  gender: string
+  diagnosis?: string
+  isActive: boolean
+}
+
 // Funções específicas da API
 export const api = {
   // Auth endpoints
@@ -98,4 +132,31 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(token),
     }),
+
+  // Children endpoints
+  getChildren: (): Promise<ChildResponse[]> =>
+    apiRequest('/Children'),
+
+  getChild: (id: string): Promise<ChildResponse> =>
+    apiRequest(`/Children/${id}`),
+
+  createChild: (childData: ChildCreateRequest): Promise<ChildResponse> =>
+    apiRequest('/Children', {
+      method: 'POST',
+      body: JSON.stringify(childData),
+    }),
+
+  updateChild: (id: string, childData: ChildUpdateRequest): Promise<ChildResponse> =>
+    apiRequest(`/Children/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(childData),
+    }),
+
+  deleteChild: (id: string): Promise<void> =>
+    apiRequest(`/Children/${id}`, {
+      method: 'DELETE',
+    }),
+
+  canAccessChild: (id: string): Promise<boolean> =>
+    apiRequest(`/Children/${id}/can-access`),
 }
