@@ -161,6 +161,48 @@ interface TransitionAssessmentRequest {
   readinessNotes?: string
 }
 
+// === INTERVENTION PLAN TYPES ===
+interface InterventionGoalResponse {
+  goalId: string
+  description: string
+  targetBehavior?: string
+  measurementCriteria?: string
+  progressNotes?: string
+  targetDate?: string
+  isAchieved: boolean
+}
+
+interface InterventionGoalRequest {
+  description: string
+  targetBehavior?: string
+  measurementCriteria?: string
+  progressNotes?: string
+  targetDate?: string
+}
+
+interface InterventionPlanResponse {
+  planId: string
+  childId: string
+  childName: string
+  psychologistId: string
+  psychologistName: string
+  startDate: string
+  endDate?: string
+  goals?: string
+  status?: string
+  createdAt: string
+  updatedAt?: string
+  interventionGoals: InterventionGoalResponse[]
+}
+
+interface InterventionPlanRequest {
+  childId: string
+  startDate: string
+  endDate?: string
+  goals?: string
+  interventionGoals?: InterventionGoalRequest[]
+}
+
 // Função para fazer requests com tratamento de erro melhorado
 async function apiRequest(endpoint: string, options: RequestInit = {}) {
   const url = `${API_BASE}${endpoint}`
@@ -372,5 +414,32 @@ export const api = {
     apiRequest('/Assessments/transition', {
       method: 'POST',
       body: JSON.stringify(data),
+    }),
+
+  // InterventionPlans endpoints
+  getInterventionPlans: (): Promise<InterventionPlanResponse[]> =>
+    apiRequest('/InterventionPlans'),
+
+  getInterventionPlan: (id: string): Promise<InterventionPlanResponse> =>
+    apiRequest(`/InterventionPlans/${id}`),
+
+  getInterventionPlansByChild: (childId: string): Promise<InterventionPlanResponse[]> =>
+    apiRequest(`/InterventionPlans/child/${childId}`),
+
+  createInterventionPlan: (data: InterventionPlanRequest): Promise<InterventionPlanResponse> =>
+    apiRequest('/InterventionPlans', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  updateInterventionPlan: (id: string, data: Partial<InterventionPlanRequest>): Promise<InterventionPlanResponse> =>
+    apiRequest(`/InterventionPlans/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  deleteInterventionPlan: (id: string): Promise<void> =>
+    apiRequest(`/InterventionPlans/${id}`, {
+      method: 'DELETE',
     }),
 }

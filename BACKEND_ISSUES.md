@@ -194,14 +194,28 @@ Child → parentID (FK para Parent)
    - **Store híbrido**: `assessment-store.ts` com padrão API + mock
    - **Teste validado**: `test-assessments-integration.js` ✅
 
+5. **✅ COMPLETADO - Módulo InterventionPlans**
+   - **Data**: 23/09/2025
+   - **Endpoints integrados**:
+     - `GET /api/InterventionPlans` - Listar todos os planos
+     - `GET /api/InterventionPlans/{id}` - Buscar plano específico
+     - `GET /api/InterventionPlans/child/{childId}` - Buscar por criança
+     - `POST /api/InterventionPlans` - Criar plano de intervenção
+     - `PUT /api/InterventionPlans/{id}` - Atualizar plano
+     - `DELETE /api/InterventionPlans/{id}` - Deletar plano
+   - **Estrutura completa**:
+     - Plano com período (startDate, endDate)
+     - Objetivos gerais (goals)
+     - Metas individuais (interventionGoals)
+     - Status do plano (Active, Completed)
+   - **Mapeamento completo**: `InterventionPlanResponse ↔ InterventionPlan`
+   - **Store híbrido**: `intervention-plan-store.ts` com padrão API + mock
+   - **Teste validado**: `test-intervention-plans-integration.js` ✅
+   - **⚠️ Observação**: InterventionGoals enviadas mas não retornam populadas na resposta (possível eager loading pendente no backend)
+
 ## 🚀 Próximas Funcionalidades para Integrar
 
-1. **Planos de Intervenção**
-   - Endpoints `/api/InterventionPlans/*`
-   - Objetivos terapêuticos
-   - Estratégias específicas
-
-3. **Sistema de Comunicação**
+1. **Sistema de Comunicação**
    - Endpoints `/api/Communication/*`
    - Mensagens entre psicólogo e pais
    - Notificações
