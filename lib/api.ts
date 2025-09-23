@@ -33,6 +33,46 @@ interface ApiError {
   status?: number
 }
 
+// === SESSION TYPES ===
+interface SessionResponse {
+  sessionId: string
+  childId: string
+  childName: string
+  psychologistId: string
+  psychologistName: string
+  sessionDate: string
+  duration: number
+  sessionType: string
+  notesWhatWasDone?: string
+  notesWhatWasDiagnosed?: string
+  notesWhatWillBeDone?: string
+  isSharedWithParent: boolean
+  createdAt: string
+  updatedAt?: string
+  parentSummary?: string
+}
+
+interface SessionCreateRequest {
+  childId: string
+  sessionDate: string
+  duration: number
+  sessionType: string
+  notesWhatWasDone?: string
+  notesWhatWasDiagnosed?: string
+  notesWhatWillBeDone?: string
+  isSharedWithParent?: boolean
+}
+
+interface SessionUpdateRequest {
+  sessionDate?: string
+  duration?: number
+  sessionType?: string
+  notesWhatWasDone?: string
+  notesWhatWasDiagnosed?: string
+  notesWhatWillBeDone?: string
+  isSharedWithParent?: boolean
+}
+
 // Função para fazer requests com tratamento de erro melhorado
 async function apiRequest(endpoint: string, options: RequestInit = {}) {
   const url = `${API_BASE}${endpoint}`
@@ -159,4 +199,34 @@ export const api = {
 
   canAccessChild: (id: string): Promise<boolean> =>
     apiRequest(`/Children/${id}/can-access`),
+
+  // Sessions endpoints
+  getSession: (id: string): Promise<SessionResponse> =>
+    apiRequest(`/Sessions/${id}`),
+
+  getSessionsByChild: (childId: string): Promise<SessionResponse[]> =>
+    apiRequest(`/Sessions/child/${childId}`),
+
+  createSession: (sessionData: SessionCreateRequest): Promise<SessionResponse> =>
+    apiRequest('/Sessions', {
+      method: 'POST',
+      body: JSON.stringify(sessionData),
+    }),
+
+  updateSession: (id: string, sessionData: SessionUpdateRequest): Promise<SessionResponse> =>
+    apiRequest(`/Sessions/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(sessionData),
+    }),
+
+  deleteSession: (id: string): Promise<void> =>
+    apiRequest(`/Sessions/${id}`, {
+      method: 'DELETE',
+    }),
+
+  shareSessionWithParent: (id: string, share: boolean): Promise<{ message: string }> =>
+    apiRequest(`/Sessions/${id}/share`, {
+      method: 'PATCH',
+      body: JSON.stringify(share),
+    }),
 }

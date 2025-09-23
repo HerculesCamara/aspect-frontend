@@ -111,6 +111,9 @@ GET /api/Children/{id}/can-access - Verificar acesso
 - ✅ **Criação de crianças funcionando** - com Parent válido
 - ✅ **Fluxo Psychologist-Parent-Child completo**
 - ✅ **Controle de acesso** - Psicólogo vê só suas crianças, Parent vê só seus filhos
+- ✅ **Módulo Sessions 100% integrado** - CRUD completo + compartilhamento
+- ✅ **Sistema de notas estruturadas** - O que foi feito, diagnosticado, próximos passos
+- ✅ **Controle de compartilhamento** - Psicólogo decide quais sessões pais veem
 
 ### 🔄 Em Progresso
 - Sistema de Avaliações VB-MAPP (próximo módulo)

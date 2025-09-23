@@ -230,7 +230,8 @@ async fetchData() {
 |--------|-------------|----------------|---------------|--------|
 | **Auth** | ✅ | ✅ | ✅ | 100% Integrado |
 | **Children** | ✅ | ✅ | ✅ | 100% Integrado |
-| **Activities** | 🔄 | 🔄 | ✅ | Mock apenas |
+| **Sessions** | ✅ | ✅ | ✅ | 100% Integrado |
+| **Activities** | ❌ | 🔄 | ✅ | Backend não existe |
 | **Reports** | 🔄 | 🔄 | ✅ | Mock apenas |
 | **Assessments** | 🔄 | ❌ | 🔄 | Próximo a integrar |
 | **Communication** | 🔄 | ❌ | ❌ | Não implementado |
