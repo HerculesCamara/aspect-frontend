@@ -203,6 +203,34 @@ interface InterventionPlanRequest {
   interventionGoals?: InterventionGoalRequest[]
 }
 
+// === COMMUNICATION TYPES ===
+interface UserResponse {
+  id: string
+  name?: string
+  email?: string
+  role: string
+  createdAt: string
+}
+
+interface MessageResponse {
+  id: string
+  senderId: string
+  sender: UserResponse
+  recipientId: string
+  recipient: UserResponse
+  content?: string
+  childId: string
+  child: ChildResponse
+  isRead: boolean
+  sentAt: string
+}
+
+interface MessageRequest {
+  recipientId: string
+  content?: string
+  childId: string
+}
+
 // Função para fazer requests com tratamento de erro melhorado
 async function apiRequest(endpoint: string, options: RequestInit = {}) {
   const url = `${API_BASE}${endpoint}`
@@ -442,4 +470,28 @@ export const api = {
     apiRequest(`/InterventionPlans/${id}`, {
       method: 'DELETE',
     }),
+
+  // Communication endpoints
+  sendMessage: (data: MessageRequest): Promise<MessageResponse> =>
+    apiRequest('/Communication/send', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  getMessagesByChild: (childId: string): Promise<MessageResponse[]> =>
+    apiRequest(`/Communication/child/${childId}`),
+
+  getConversation: (otherUserId: string, childId: string): Promise<MessageResponse[]> =>
+    apiRequest(`/Communication/conversation/${otherUserId}/child/${childId}`),
+
+  getUnreadMessages: (): Promise<MessageResponse[]> =>
+    apiRequest('/Communication/unread'),
+
+  markMessageAsRead: (messageId: string): Promise<void> =>
+    apiRequest(`/Communication/${messageId}/read`, {
+      method: 'PATCH',
+    }),
+
+  getUnreadCount: (): Promise<number> =>
+    apiRequest('/Communication/unread-count'),
 }

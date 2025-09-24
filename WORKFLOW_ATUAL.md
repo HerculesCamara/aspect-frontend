@@ -1,16 +1,18 @@
 # 🔄 Workflow Atual do Sistema ASPCT
 
-## 📋 Status Geral da Integração
+## 📋 Status Geral da Integração (Atualizado 24/09/2025)
 
-### ✅ **Funcionalidades Completamente Integradas**
+### ✅ **Funcionalidades 100% Integradas (6 módulos)**
 - **Autenticação** (registro, login, validação de token)
-- **Módulo Children** (CRUD completo com controle de acesso)
+- **Children** (CRUD completo com controle de acesso)
+- **Sessions** (CRUD + compartilhamento com pais)
+- **Reports** (geração + PDF + estatísticas)
+- **Assessments** (VB-MAPP completo: Milestones, Barriers, Transition)
+- **InterventionPlans** (CRUD + metas)
 
-### 🔄 **Funcionalidades com Dados Mock**
-- **Atividades Terapêuticas**
-- **Relatórios**
-- **Avaliações VB-MAPP**
-- **Planos de Intervenção**
+### ❌ **Funcionalidades Bloqueadas/Mock**
+- **Communication** - Frontend 100%, backend com erro crítico de acesso
+- **Activities** - Backend não existe, funciona 100% em mock
 
 ---
 
@@ -68,21 +70,26 @@ app/
 ### **Stores (Zustand)**
 ```
 store/
-├── auth-store.ts       ✅ Híbrido (API + mock)
-├── crianca-store.ts    ✅ Híbrido (API + mock)
-├── atividade-store.ts  🔄 Apenas mock
-└── relatorio-store.ts  🔄 Apenas mock
+├── auth-store.ts              ✅ Híbrido (API + mock)
+├── crianca-store.ts           ✅ Híbrido (API + mock)
+├── session-store.ts           ✅ Híbrido (API + mock)
+├── relatorio-store.ts         ✅ Híbrido (API + mock)
+├── assessment-store.ts        ✅ Híbrido (API + mock)
+├── intervention-plan-store.ts ✅ Híbrido (API + mock)
+├── communication-store.ts     ✅ Híbrido (bloqueado no backend)
+└── atividade-store.ts         🔄 Apenas mock
 ```
 
 ### **API Client**
 ```
-lib/api.ts             ✅ Auth + Children integrados
-├── registerUser()     ✅ Funcionando
-├── loginUser()        ✅ Funcionando
-├── getChildren()      ✅ Funcionando
-├── createChild()      ✅ Funcionando
-├── updateChild()      ✅ Funcionando
-└── deleteChild()      ✅ Funcionando
+lib/api.ts                  ✅ 7 módulos mapeados
+├── Auth endpoints          ✅ 3 funções
+├── Children endpoints      ✅ 6 funções
+├── Sessions endpoints      ✅ 6 funções
+├── Reports endpoints       ✅ 5 funções
+├── Assessments endpoints   ✅ 6 funções
+├── InterventionPlans       ✅ 6 funções
+└── Communication           ✅ 6 funções (bloqueado)
 ```
 
 ---
@@ -184,15 +191,18 @@ interface ChildResponse {
 - 5 atividades pré-definidas
 - Categorias: cognitivo, linguagem, motor, social
 - Estrutura completa: objetivos, materiais, passos, adaptações
+- **Status**: Backend não existe - funciona 100% em modo mock
 
 ### **Relatórios** (`relatorio-store.ts`)
 - 3 tipos: mensal, trimestral, avaliação
 - Estrutura: resumo, marcos alcançados, recomendações
+- **Status**: ✅ 100% integrado com backend
 
 ### **Sistema VB-MAPP**
 - 170 marcos em 3 níveis (baseado no PDF)
 - 24 barreiras de desenvolvimento
 - 18 áreas de transição
+- **Status**: ✅ 100% integrado via Assessments
 
 ---
 
@@ -232,48 +242,44 @@ async fetchData() {
 | **Children** | ✅ | ✅ | ✅ | 100% Integrado |
 | **Sessions** | ✅ | ✅ | ✅ | 100% Integrado |
 | **Reports** | ✅ | ✅ | ✅ | 100% Integrado |
+| **Assessments** | ✅ | ✅ | ✅ | 100% Integrado |
+| **InterventionPlans** | ✅ | ✅ | ✅ | 100% Integrado |
+| **Communication** | ❌ | ✅ | ⏳ | Backend bloqueado |
 | **Activities** | ❌ | 🔄 | ✅ | Backend não existe |
-| **Assessments** | 🔄 | ❌ | 🔄 | Próximo a integrar |
-| **Communication** | 🔄 | ❌ | ❌ | Próximo a integrar |
 
 ---
 
 ## 🚀 Próximos Passos de Integração
 
-### **1. Atividades Terapêuticas**
+### **1. Communication - Correção Backend** 🚨 **BLOQUEADO**
+**Status**: Integração frontend completa, mas backend com erro crítico
+
+**Estrutura já implementada:**
+- ✅ Tipagens TypeScript (`lib/api.ts`)
+- ✅ Endpoints API mapeados (6 endpoints)
+- ✅ Store híbrido (`communication-store.ts`)
+- ✅ Mapeamento bidirecional
+- ✅ Dados mock funcionais
+
+**Problema crítico:**
+- Endpoint `/api/Communication/send` retorna `"Acesso negado para enviar mensagem sobre esta criança"`
+- Validação de acesso inconsistente com módulo Children
+- **Requer correção no backend** para funcionar
+
+**Endpoints disponíveis:**
 ```
-Endpoints a integrar:
-- GET /api/Activities
-- POST /api/Activities
-- PUT /api/Activities/{id}
-- DELETE /api/Activities/{id}
+POST /api/Communication/send
+GET /api/Communication/child/{childId}
+GET /api/Communication/conversation/{otherUserId}/child/{childId}
+GET /api/Communication/unread
+PATCH /api/Communication/{messageId}/read
+GET /api/Communication/unread-count
 ```
 
-### **2. Sistema de Avaliações VB-MAPP**
-```
-Endpoints a integrar:
-- GET /api/Assessments
-- POST /api/Assessments
-- GET /api/Assessments/{childId}
-- PUT /api/Assessments/{id}
-```
+### **2. Atividades Terapêuticas** ⏳
+**Status**: Backend não implementado
 
-### **3. Relatórios**
-```
-Endpoints a integrar:
-- GET /api/Reports
-- POST /api/Reports/generate
-- GET /api/Reports/{childId}
-- GET /api/Reports/{id}/download
-```
-
-### **4. Sistema de Comunicação**
-```
-Endpoints a integrar:
-- GET /api/Communication/messages
-- POST /api/Communication/messages
-- GET /api/Communication/notifications
-```
+Sem endpoints disponíveis no swagger. Sistema funciona 100% em modo mock.
 
 ---
 
@@ -325,6 +331,11 @@ node test-create-parent-and-child.js # Testa fluxo completo
 
 ## 🎯 Conclusão
 
-O sistema está **70% integrado** com o backend, com as funcionalidades core (Auth + Children) totalmente funcionais. A arquitetura híbrida permite desenvolvimento contínuo enquanto as APIs restantes são integradas gradualmente.
+O sistema está **~90% integrado** com o backend, com **6 módulos principais 100% funcionais** (Auth, Children, Sessions, Reports, Assessments, InterventionPlans). A arquitetura híbrida permite desenvolvimento contínuo e garante funcionamento mesmo com módulos em mock.
 
-**Próximo módulo recomendado para integração:** Atividades Terapêuticas (menor complexidade, alta visibilidade para usuários).
+### **Status Atualizado (24/09/2025):**
+- ✅ **6 módulos totalmente integrados**
+- ❌ **Communication**: Frontend completo, backend bloqueado (erro de acesso)
+- ❌ **Activities**: Backend não existe (funciona em mock)
+
+**Sistema operacional com fallbacks inteligentes garantindo UX consistente.**

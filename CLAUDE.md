@@ -32,10 +32,14 @@ Sistema de acompanhamento terapêutico para crianças com TEA (Transtorno do Esp
 │   ├── layout/            # AppShell (navegação + auth)
 │   └── theme-provider.tsx # Provider de tema
 ├── store/                 # Stores Zustand
-│   ├── auth-store.ts     # Autenticação
-│   ├── crianca-store.ts  # Gestão de crianças
-│   ├── atividade-store.ts # Atividades terapêuticas
-│   └── relatorio-store.ts # Relatórios
+│   ├── auth-store.ts              # Autenticação
+│   ├── crianca-store.ts           # Gestão de crianças
+│   ├── session-store.ts           # Sessões terapêuticas
+│   ├── relatorio-store.ts         # Relatórios
+│   ├── assessment-store.ts        # Avaliações VB-MAPP
+│   ├── intervention-plan-store.ts # Planos de intervenção
+│   ├── communication-store.ts     # Sistema de mensagens
+│   └── atividade-store.ts         # Atividades (mock only)
 ├── hooks/                 # Custom hooks
 ├── lib/                   # Utilities
 └── styles/               # CSS global
@@ -75,28 +79,52 @@ tipos: "psicologo" | "pai"
 
 ## 📊 Gerenciamento de Estado (Zustand)
 
-### 1. auth-store.ts - ✅ INTEGRADO
+### 1. auth-store.ts - ✅ 100% INTEGRADO
 - **Estratégia híbrida**: API real com fallback para mock
 - **Funções**: `login()`, `logout()`, `initAuth()`
 - **Estado**: `user`, `isUsingMockData`
 - **Token**: Validação automática JWT + localStorage
 
-### 2. crianca-store.ts - 🔄 PRÓXIMO PARA INTEGRAÇÃO
-- **3 crianças mockadas** com dados completos
+### 2. crianca-store.ts - ✅ 100% INTEGRADO
+- **CRUD completo** com backend .NET
 - Estrutura: `id`, `nome`, `idade`, `nivelVBMAPP`, `progresso`, `alertas`, `responsavel`, `informacoesMedicas`
-- Funções: `fetchCriancas()`, `addCrianca()`, `getCriancaById()`
-- **Backend disponível**: `/api/Children` (GET, POST, PUT, DELETE)
+- Funções: `fetchCriancas()`, `addCrianca()`, `updateCrianca()`, `deleteCrianca()`, `getCriancaById()`
+- **Backend**: `/api/Children` (GET, POST, PUT, DELETE)
+- Mapeamento bidirecional completo
 
-### 3. atividade-store.ts  
+### 3. session-store.ts - ✅ 100% INTEGRADO
+- **CRUD de sessões** terapêuticas
+- Notas estruturadas (o que foi feito, diagnosticado, próximos passos)
+- Sistema de compartilhamento com pais
+- **Backend**: `/api/Sessions`
+
+### 4. relatorio-store.ts - ✅ 100% INTEGRADO
+- **Geração automática** de relatórios
+- Download de PDF pelo backend
+- Estatísticas integradas (sessões, avaliações, metas)
+- **Backend**: `/api/Reports`
+
+### 5. assessment-store.ts - ✅ 100% INTEGRADO
+- **Sistema VB-MAPP completo** (170 marcos)
+- 3 tipos: Milestones, Barriers, Transition
+- Progress data consolidado
+- **Backend**: `/api/Assessments`
+
+### 6. intervention-plan-store.ts - ✅ 100% INTEGRADO
+- **Planos de intervenção** com metas
+- Status e períodos
+- **Backend**: `/api/InterventionPlans`
+
+### 7. communication-store.ts - ✅ Frontend completo, ❌ Backend bloqueado
+- **Sistema de mensagens** entre psicólogo e pais
+- Contador de não lidas
+- **Backend**: `/api/Communication` (erro crítico de acesso)
+- Funciona 100% em modo mock
+
+### 8. atividade-store.ts - 🔄 Apenas Mock
 - **5 atividades terapêuticas** pré-definidas
 - Categorias: cognitivo, linguagem, motor, social
-- Estrutura: objetivos, materiais, passos, adaptações, duração, nivelVBMAPP
-- Funções: `fetchAtividades()`, `criarAtividade()`
-
-### 4. relatorio-store.ts
-- **3 relatórios de exemplo** (mensal, trimestral, avaliação)
-- Estrutura: resumo, marcos alcançados, recomendações casa/escola
-- Funções: `fetchRelatorios()`, `gerarRelatorio()`
+- **Backend não existe** - 100% mock
 
 ## 🎯 Funcionalidades Principais
 
@@ -187,12 +215,15 @@ tipos: "psicologo" | "pai"
 
 ## ⚠️ Limitações e Observações Importantes
 
-### Status de Integração:
-- ✅ **Autenticação**: Integrada com backend .NET
-- 🔄 **Children**: Próximo para integração (endpoints disponíveis)
-- ⏳ **Activities**: Aguardando integração
-- ⏳ **Reports**: Aguardando integração
-- ⏳ **Assessments**: Aguardando integração
+### Status de Integração (Atualizado 24/09/2025):
+- ✅ **Autenticação**: 100% integrado
+- ✅ **Children**: 100% integrado
+- ✅ **Sessions**: 100% integrado
+- ✅ **Reports**: 100% integrado
+- ✅ **Assessments**: 100% integrado (VB-MAPP completo)
+- ✅ **InterventionPlans**: 100% integrado
+- ❌ **Communication**: Backend bloqueado (acesso negado) - funciona em mock
+- ❌ **Activities**: Backend não existe - funciona em mock
 
 ### Dados Mock (Fallback):
 - **Nenhuma persistência real** - tudo reseta ao recarregar (apenas no modo mock)
@@ -201,9 +232,9 @@ tipos: "psicologo" | "pai"
 
 ### Funcionalidades Incompletas:
 - **Gráficos**: Recharts desabilitado (incompatibilidade React 19)
-- **Sessões**: Referenciadas mas não implementadas
+- **Communication**: Backend com erro de validação de acesso (funciona em mock)
+- **Activities**: Backend não implementado (funciona em mock)
 - **Upload**: Interfaces prontas mas não funcionais
-- **Relatórios PDF**: Não implementado
 
 ### Configuração de Build:
 - ESLint/TypeScript errors **ignorados** durante build
@@ -260,13 +291,20 @@ npm run lint         # Executa linting (configurado mas ignorado no build)
 4. **Configurar proteção de rota** se necessário
 
 ## 🎯 Contexto de Uso
-Este é um **sistema de acompanhamento terapêutico** para crianças com TEA **70% integrado** com backend .NET real.
+Este é um **sistema de acompanhamento terapêutico** para crianças com TEA **~90% integrado** com backend .NET real.
 
-### Estado Atual:
+### Estado Atual (24/09/2025):
 - ✅ **Frontend**: Completo com dados mock + API integration
 - ✅ **Backend**: API .NET totalmente funcional
-- ✅ **Integração**: Auth + Children 100% integrados
-- 🔄 **Restante**: Atividades, Relatórios, Avaliações ainda em mock
+- ✅ **Integração Completa (6 módulos)**:
+  - Auth ✅
+  - Children ✅
+  - Sessions ✅
+  - Reports ✅
+  - Assessments ✅
+  - InterventionPlans ✅
+- ❌ **Communication**: Frontend pronto, backend bloqueado (erro de acesso)
+- ❌ **Activities**: Backend não existe (funciona em mock)
 
 ### Arquivos de Documentação:
 - **CLAUDE_METHODOLOGY.md**: Padrões e metodologia de desenvolvimento Claude
