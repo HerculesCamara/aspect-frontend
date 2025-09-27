@@ -12,6 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useAuthStore } from "@/store/auth-store"
 import { Loader2, Heart, Puzzle } from "lucide-react"
 import { toast } from "sonner"
+import Link from "next/link"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -140,15 +141,29 @@ export default function LoginPage() {
               </Button>
             </form>
 
-            {/* Informações de teste */}
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <p className="text-sm font-medium text-blue-800 mb-2">Contas para teste:</p>
-              <div className="space-y-2 text-xs text-blue-700">
-                <div>
-                  <strong>Psicólogo:</strong> ana.silva@exemplo.com / 123456
-                </div>
-                <div>
-                  <strong>Pai/Responsável:</strong> carlos@exemplo.com / 123456
+            {/* Links de navegação */}
+            <div className="mt-6 space-y-4">
+              {/* Link para registro */}
+              <div className="text-center text-sm text-muted-foreground">
+                Não tem uma conta?{" "}
+                <Link
+                  href="/registro"
+                  className="text-blue-600 hover:text-blue-500 font-medium hover:underline"
+                >
+                  Criar conta
+                </Link>
+              </div>
+
+              {/* Informações de teste */}
+              <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <p className="text-sm font-medium text-blue-800 mb-2">Contas para teste:</p>
+                <div className="space-y-2 text-xs text-blue-700">
+                  <div>
+                    <strong>Psicólogo:</strong> ana.silva@exemplo.com / 123456
+                  </div>
+                  <div>
+                    <strong>Pai/Responsável:</strong> carlos@exemplo.com / 123456
+                  </div>
                 </div>
               </div>
             </div>
