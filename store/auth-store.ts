@@ -97,60 +97,23 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   register: async (userData: any) => {
-    try {
-      // Tentar API real primeiro
-      const response = await api.register(userData)
+    // Registro APENAS pela API - sem fallback mock
+    const response = await api.register(userData)
 
-      // Mapear resposta do backend para formato frontend
-      const user: User = {
-        id: response.userId,
-        nome: `${response.firstName} ${response.lastName}`,
-        email: response.email,
-        tipo: response.role === "Psychologist" ? "psicologo" : "pai",
-        token: response.token,
-      }
-
-      // Salvar token para próximas requests
-      localStorage.setItem("aspct_token", response.token)
-      localStorage.setItem("aspct_using_mock", "false")
-
-      set({ user, isUsingMockData: false })
-    } catch (error) {
-      console.warn("API register failed, trying mock registration:", error)
-
-      // Fallback para dados mock - simular registro
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      // Verificar se email já existe nos mocks
-      const existingUser = mockUsers.find(u => u.email === userData.email)
-      if (existingUser) {
-        throw new Error("Email já cadastrado")
-      }
-
-      // Criar novo usuário mock
-      const newMockUser = {
-        id: Date.now().toString(),
-        nome: `${userData.firstName} ${userData.lastName}`,
-        email: userData.email,
-        tipo: userData.role === "Psychologist" ? "psicologo" as UserType : "pai" as UserType,
-        senha: userData.password,
-      }
-
-      // Adicionar aos mocks (apenas para a sessão atual)
-      mockUsers.push(newMockUser)
-
-      const user: User = {
-        id: newMockUser.id,
-        nome: newMockUser.nome,
-        email: newMockUser.email,
-        tipo: newMockUser.tipo,
-      }
-
-      localStorage.setItem("aspct_mock_user", JSON.stringify(user))
-      localStorage.setItem("aspct_using_mock", "true")
-
-      set({ user, isUsingMockData: true })
+    // Mapear resposta do backend para formato frontend
+    const user: User = {
+      id: response.userId,
+      nome: `${response.firstName} ${response.lastName}`,
+      email: response.email,
+      tipo: response.role === "Psychologist" ? "psicologo" : "pai",
+      token: response.token,
     }
+
+    // Salvar token para próximas requests
+    localStorage.setItem("aspct_token", response.token)
+    localStorage.setItem("aspct_using_mock", "false")
+
+    set({ user, isUsingMockData: false })
   },
 
   // Função para recuperar login ao recarregar página
