@@ -144,6 +144,10 @@ GET /api/Children/{id}/can-access - Verificar acesso
 ### ❌ Com Problemas
 - Role validation (PT-BR não aceito) - usar sempre roles em inglês
 - primaryParentId: ✅ **IDENTIFICADO E RESOLVIDO** - requer Parent válido no sistema
+- **🚨 NOVO (30/09/2025)**: Endpoint `/api/Parents/get-id-by-email` retorna 404 mesmo com Parent válido
+  - Parent existe (login funciona, UserID: `d76dd047-ef51-439a-b1ab-7e47280d8d99`)
+  - Role no backend: "Responsável" (PT-BR)
+  - Endpoint não encontra o Parent (possível incompatibilidade de role)
 
 ### ⏳ Não Testado
 - ~~Planos de intervenção~~ ✅ **COMPLETADO** (23/09/2025)
@@ -264,3 +268,67 @@ Child → parentID (FK para Parent)
 - **1/8 módulos** sem backend disponível
 
 **Sistema totalmente operacional com estratégia híbrida garantindo UX.**
+
+## 🐛 Problema Atual: Endpoint Parents/get-id-by-email falta userId (30/09/2025)
+
+### ✅ Problema do Role Resolvido:
+- Backend corretamente aceita role "Parent" (EN)
+- Endpoint `/api/Parents/get-id-by-email` funciona e encontra responsáveis
+- Sistema cria registro na tabela `Parents` automaticamente ao registrar
+
+### 🚨 NOVO PROBLEMA CRÍTICO: userId ausente na resposta
+
+**Contexto**:
+- Endpoint implementado e funcionando: `GET /api/Parents/get-id-by-email`
+- Backend retorna: `parentId`, `firstName`, `lastName`, `email`, `relationship`, `fullName`
+- **Falta**: `userId` (necessário para criar crianças)
+
+**Por quê é crítico**:
+```csharp
+// ChildService.CreateChildAsync espera userId, não parentId
+var primaryParent = await _userRepository.GetParentByUserIdAsync(request.PrimaryParentId);
+// ↑ Busca Parent pelo UserId do responsável
+```
+
+**Solução** (Controllers/ParentsController.cs, linha ~65):
+```csharp
+return Ok(new
+{
+    parentId = parent.ParentId,
+    userId = parent.UserId,  // ← ADICIONAR ESSA LINHA
+    firstName = parent.FirstName,
+    lastName = parent.LastName,
+    email = parent.Email,
+    relationship = parent.ChildRelationship,
+    fullName = parent.FullName
+});
+```
+
+**Nota**: `ParentService.FindParentByEmailAsync()` JÁ retorna userId (linha 40), apenas o Controller não está expondo na API.
+
+### Teste de Validação:
+
+✅ **Endpoint funcionando**:
+```bash
+GET /api/Parents/get-id-by-email?email=joao.silva@example.com
+Response 200: { parentId, firstName, lastName... }
+```
+
+✅ **Criação de criança funciona com userId correto**:
+```bash
+POST /api/Children
+{ primaryParentId: "62f81c66-eb3a-463b-926f-7ed0ab404f50" } # userId do parent
+Response 201: Criança criada com sucesso
+```
+
+❌ **Criação falha com parentId**:
+```bash
+POST /api/Children
+{ primaryParentId: "6d181ca7-0c75-4c5e-ac62-081e6b9e565f" } # parentId
+Response 400: "Responsável principal não encontrado"
+```
+
+### Status:
+- ✅ Frontend integrado e pronto
+- ⏳ Aguardando backend adicionar `userId` no retorno
+- 🔴 **Bloqueio**: Não é possível cadastrar crianças via interface sem essa correção

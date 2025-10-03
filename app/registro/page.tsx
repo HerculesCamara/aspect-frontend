@@ -13,9 +13,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Separator } from "@/components/ui/separator"
 import { useAuthStore } from "@/store/auth-store"
+import { registrationSchema, formatZodErrors } from "@/lib/validations/auth"
 import { Loader2, Heart, Puzzle, UserPlus, ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
+import { formatPhoneNumber, unformatPhoneNumber } from "@/lib/utils/phone-formatter"
 
 interface RegistroFormData {
   username: string
@@ -66,21 +68,15 @@ export default function RegistroPage() {
   }
 
   const validateForm = (): string | null => {
-    // Campos obrigatórios básicos
-    if (!formData.username.trim()) return "Nome de usuário é obrigatório"
-    if (!formData.email.trim()) return "Email é obrigatório"
-    if (!formData.firstName.trim()) return "Nome é obrigatório"
-    if (!formData.lastName.trim()) return "Sobrenome é obrigatório"
-    if (!formData.password) return "Senha é obrigatória"
-    if (formData.password.length < 6) return "Senha deve ter pelo menos 6 caracteres"
-    if (formData.password !== formData.confirmPassword) return "Senhas não conferem"
+    // Validação com Zod
+    const result = registrationSchema.safeParse(formData)
 
-    // Validação de email básica
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(formData.email)) return "Email inválido"
-
-    // Nota: Campos específicos são OPCIONAIS no backend
-    // Sem validações obrigatórias por role
+    if (!result.success) {
+      // Pegar primeiro erro para exibir
+      const errors = formatZodErrors(result.error)
+      const firstError = Object.values(errors)[0]
+      return firstError || "Erro de validação"
+    }
 
     return null
   }
@@ -106,13 +102,13 @@ export default function RegistroPage() {
         firstName: formData.firstName,
         lastName: formData.lastName,
         role: formData.role,
-        contactNumber: formData.contactNumber || undefined,
+        contactNumber: unformatPhoneNumber(formData.contactNumber.trim()) || undefined,
 
         // Campos específicos por role
         ...(formData.role === 'Psychologist' && {
-          licenseNumber: formData.licenseNumber,
-          specialization: formData.specialization,
-          clinicName: formData.clinicName || undefined,
+          licenseNumber: formData.licenseNumber.trim() || undefined,
+          specialization: formData.specialization.trim() || undefined,
+          clinicName: formData.clinicName.trim() || undefined,
         }),
 
         ...(formData.role === 'Parent' && {
@@ -229,7 +225,10 @@ export default function RegistroPage() {
                   <Input
                     id="contactNumber"
                     value={formData.contactNumber}
-                    onChange={(e) => handleInputChange('contactNumber', e.target.value)}
+                    onChange={(e) => {
+                      const formatted = formatPhoneNumber(e.target.value)
+                      handleInputChange('contactNumber', formatted)
+                    }}
                     placeholder="(11) 99999-9999"
                   />
                 </div>

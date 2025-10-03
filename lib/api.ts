@@ -494,4 +494,16 @@ export const api = {
 
   getUnreadCount: (): Promise<number> =>
     apiRequest('/Communication/unread-count'),
+
+  // Parents endpoints
+  getParentIdByEmail: (email: string): Promise<{
+    parentId: string
+    userId?: string  // TODO: Backend precisa adicionar esse campo
+    firstName: string
+    lastName: string
+    email: string
+    relationship: string
+    fullName: string
+  }> =>
+    apiRequest(`/Parents/get-id-by-email?email=${encodeURIComponent(email)}`),
 }

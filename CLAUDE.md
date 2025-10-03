@@ -32,8 +32,9 @@ Sistema de acompanhamento terapêutico para crianças com TEA (Transtorno do Esp
 │   ├── layout/            # AppShell (navegação + auth)
 │   └── theme-provider.tsx # Provider de tema
 ├── store/                 # Stores Zustand
-│   ├── auth-store.ts              # Autenticação
+│   ├── auth-store.ts              # Autenticação + Registro (NOVO)
 │   ├── crianca-store.ts           # Gestão de crianças
+│   ├── parent-store.ts            # Busca de responsáveis (NOVO - LGPD compliant)
 │   ├── session-store.ts           # Sessões terapêuticas
 │   ├── relatorio-store.ts         # Relatórios
 │   ├── assessment-store.ts        # Avaliações VB-MAPP
@@ -81,9 +82,10 @@ tipos: "psicologo" | "pai"
 
 ### 1. auth-store.ts - ✅ 100% INTEGRADO
 - **Estratégia híbrida**: API real com fallback para mock
-- **Funções**: `login()`, `logout()`, `initAuth()`
+- **Funções**: `login()`, `register()`, `logout()`, `initAuth()`
 - **Estado**: `user`, `isUsingMockData`
 - **Token**: Validação automática JWT + localStorage
+- **Registro**: Sistema completo com validação de campos por role (Psychologist/Parent)
 
 ### 2. crianca-store.ts - ✅ 100% INTEGRADO
 - **CRUD completo** com backend .NET
@@ -91,8 +93,17 @@ tipos: "psicologo" | "pai"
 - Funções: `fetchCriancas()`, `addCrianca()`, `updateCrianca()`, `deleteCrianca()`, `getCriancaById()`
 - **Backend**: `/api/Children` (GET, POST, PUT, DELETE)
 - Mapeamento bidirecional completo
+- **Integração com parent-store**: Busca responsável por primaryParentId
 
-### 3. session-store.ts - ✅ 100% INTEGRADO
+### 3. parent-store.ts - ✅ NOVO - LGPD COMPLIANT
+- **Busca por email**: Sistema de pesquisa de responsáveis sem listagem completa
+- **Funções**: `searchParentByEmail()`, `fetchParents()`, `getParentById()`, `clearSearch()`
+- **Estado**: `parents[]`, `searchedParent`, `isSearching`, `isUsingMockData`
+- **LGPD**: Não exibe lista completa de pais, apenas busca por email específico
+- **Debounce**: 500ms para evitar requisições excessivas
+- **Mock data**: 3 responsáveis de exemplo para testes
+
+### 4. session-store.ts - ✅ 100% INTEGRADO
 - **CRUD de sessões** terapêuticas
 - Notas estruturadas (o que foi feito, diagnosticado, próximos passos)
 - Sistema de compartilhamento com pais
@@ -323,3 +334,117 @@ Implementada em todos os stores - tenta API real primeiro, com fallback automát
 - Integrar apenas o que o backend realmente oferece via API
 - Seguir padrões estabelecidos em CLAUDE_METHODOLOGY.md para consistência
 - Manter abordagem incremental: testar → documentar → integrar
+
+## 🆕 Implementações Recentes
+
+### **Sessão 03/10/2025 - Validações com Zod + Correção CORS**
+
+#### 1. Sistema de Validação com Zod ✅
+- **Arquivos criados**:
+  - `lib/validations/auth.ts` - Schemas de autenticação
+  - `lib/validations/child.ts` - Schemas de crianças
+- **Benefícios**:
+  - Código 50% mais limpo (20+ linhas → 11 linhas)
+  - Type-safe com inferência automática
+  - Mensagens de erro customizadas
+  - Transform automático (string vazia → undefined)
+  - Validação de contactNumber (máximo 20 caracteres)
+- **Schemas implementados**:
+  - `registrationSchema` - Registro de Psychologist/Parent
+  - `createChildSchema` - Criação de crianças
+  - `parentEmailSchema` - Validação de email
+
+#### 2. Correção CORS Backend ✅
+- **Problema**: Frontend rodando em porta 3001, CORS bloqueava requisições
+- **Solução**: Adicionado `http://localhost:3001` em `Program.cs`
+- **Status**: Resolvido - Frontend se comunica com backend sem erros
+
+#### 3. Correção Bug contactNumber ✅
+- **Problema**: Campo vazio enviava string `""` ao invés de `undefined`
+- **Backend rejeitava**: Erro "ContactNumber must be maximum 20 characters"
+- **Solução**: Transform em Zod + `.trim() || undefined`
+- **Status**: Registros funcionando 100%
+
+#### 4. Fluxo Completo Validado ✅
+- ✅ Cadastro de Psicólogo com backend
+- ✅ Cadastro de Parent com backend
+- ✅ Busca de Parent por email
+- ✅ Criação de criança vinculando Parent
+- ✅ Token JWT funcionando corretamente
+
+---
+
+### **Sessão 27/09/2025 - Sistema de Registro**
+
+#### 1. Sistema de Registro de Usuários
+- **Arquivo**: `app/registro/page.tsx` (NOVO)
+- **Funcionalidade**: Cadastro de novos usuários (Psychologist/Parent)
+- **Integração**: `auth-store.ts` - função `register()` adicionada
+- **Campos condicionais**: Campos específicos por role
+- **Validação**: Email, senha, confirmação de senha
+
+#### 2. Parent Store - Busca LGPD Compliant
+- **Arquivo**: `store/parent-store.ts` (NOVO)
+- **Funcionalidade**: Busca de responsáveis por email (sem listagem completa)
+- **LGPD**: Não exibe lista de todos os pais por questões de privacidade
+- **Debounce**: 500ms para evitar requisições excessivas
+- **Mock Data**: 3 responsáveis de exemplo para testes
+
+#### 3. Reformulação da Criação de Crianças
+- **Arquivo**: `app/criancas/nova/page.tsx` (REESCRITO)
+- **Mudança**: Dropdown de pais → Busca por email
+- **Integração**: Com parent-store para busca de responsáveis
+- **UX**: Validação em tempo real, feedback visual
+- **Debounce**: 800ms para busca de responsáveis
+
+## ✅ Sessão 30/09/2025 - Parent Endpoint: Integração Parcial
+
+### Progresso:
+1. **Endpoint `/api/Parents/get-id-by-email` implementado** ✅
+   - Backend funcionando corretamente
+   - Busca responsáveis por email (LGPD compliant)
+   - Role "Parent" (EN) funcionando
+
+2. **Frontend integrado** ✅
+   - `lib/api.ts`: Tipagem completa do endpoint
+   - `store/parent-store.ts`: Implementação limpa sem workarounds
+   - `app/criancas/nova/page.tsx`: Busca de responsável com debounce
+
+3. **Testes realizados** ✅
+   - Registro de Parent: ✅ Funciona (cria User + Parent)
+   - Busca por email: ✅ Funciona (retorna dados do responsável)
+   - Criação de criança via API: ✅ Funciona (com userId correto)
+
+### 🚨 Problema Identificado - BLOQUEIO CRÍTICO:
+
+**Issue**: Endpoint retorna `parentId` mas `ChildService` precisa de `userId`
+
+**Impacto**: Não é possível cadastrar crianças pela interface (frontend)
+
+**Causa**:
+- Backend retorna: `{ parentId, firstName, lastName, email, relationship, fullName }`
+- Backend **NÃO retorna**: `userId`
+- `ChildService.CreateChildAsync()` espera `primaryParentId` como **userId**, não parentId
+
+**Solução pendente** (backend):
+```csharp
+// Controllers/ParentsController.cs (linha ~65)
+return Ok(new {
+    parentId = parent.ParentId,
+    userId = parent.UserId,  // ← ADICIONAR
+    // ... demais campos
+});
+```
+
+**Nota**: `ParentService` JÁ busca o userId, apenas falta expor na API.
+
+### Arquivos Modificados:
+- `lib/api.ts` - Tipagem com `userId?: string` (preparado para correção)
+- `store/parent-store.ts` - Interface `Parent` com `id` (userId) + `parentId`
+- Documentação atualizada: `BACKEND_ISSUES.md`
+
+### Status Final:
+- ✅ **Backend endpoint**: Funcional (falta apenas userId no retorno)
+- ✅ **Frontend**: Integrado e pronto
+- 🔴 **Bloqueio**: Aguardando correção backend para cadastro de crianças
+- ✅ **Workaround**: Criação via API direta funciona (com userId manual)

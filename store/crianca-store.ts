@@ -19,6 +19,8 @@ interface Crianca {
   alertas?: string[]
   foto?: string
   dataNascimento?: string
+  genero?: string
+  primaryParentId?: string
   responsavel?: {
     nome: string
     telefone: string
@@ -26,9 +28,10 @@ interface Crianca {
     endereco: string
   }
   informacoesMedicas?: {
-    medicamentos: string
-    alergias: string
-    observacoes: string
+    diagnostico?: string
+    medicamentos?: string
+    alergias?: string
+    observacoes?: string
   }
 }
 
@@ -181,7 +184,7 @@ function mapChildResponseToCrianca(child: any): Crianca {
 }
 
 // Função para mapear Crianca (frontend) para ChildCreateRequest (backend)
-function mapCriancaToChildCreateRequest(crianca: Omit<Crianca, "id">): any {
+function mapCriancaToChildCreateRequest(crianca: any): any {
   const [firstName, ...lastNameParts] = crianca.nome.split(' ')
 
   // Converter data nascimento para ISO format se disponível
@@ -189,18 +192,14 @@ function mapCriancaToChildCreateRequest(crianca: Omit<Crianca, "id">): any {
     ? crianca.dataNascimento + 'T00:00:00Z'
     : new Date().toISOString() // Fallback para hoje se não informado
 
-  // IMPORTANTE: Para funcionar, precisa de um Parent válido no sistema
-  // Por enquanto, usar null para indicar que precisa ser preenchido
-  const primaryParentId = null // TODO: implementar lógica para obter Parent válido
-
   return {
     firstName: firstName || 'Nome',
     lastName: lastNameParts.join(' ') || 'Sobrenome',
     dateOfBirth: dateOfBirth,
-    gender: 'Não informado', // TODO: adicionar campo gender no frontend
-    diagnosis: crianca.informacoesMedicas?.medicamentos || 'TEA',
-    primaryParentId: primaryParentId,
-    medicalHistory: crianca.informacoesMedicas?.observacoes || null
+    gender: crianca.genero || 'Não informado',
+    diagnosis: crianca.informacoesMedicas?.diagnostico || 'TEA',
+    primaryParentId: crianca.primaryParentId, // Agora vem do frontend
+    // Removido medicalHistory pois não está no ChildCreateRequest da API
   }
 }
 
