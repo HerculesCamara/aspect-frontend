@@ -415,36 +415,247 @@ Implementada em todos os stores - tenta API real primeiro, com fallback automát
    - Busca por email: ✅ Funciona (retorna dados do responsável)
    - Criação de criança via API: ✅ Funciona (com userId correto)
 
-### 🚨 Problema Identificado - BLOQUEIO CRÍTICO:
+### ✅ Problema Identificado e RESOLVIDO (03/10/2025):
 
-**Issue**: Endpoint retorna `parentId` mas `ChildService` precisa de `userId`
+**Issue**: Endpoint retornava `parentId` mas `ChildService` precisava de `userId`
 
-**Impacto**: Não é possível cadastrar crianças pela interface (frontend)
-
-**Causa**:
-- Backend retorna: `{ parentId, firstName, lastName, email, relationship, fullName }`
-- Backend **NÃO retorna**: `userId`
-- `ChildService.CreateChildAsync()` espera `primaryParentId` como **userId**, não parentId
-
-**Solução pendente** (backend):
+**Solução implementada** (backend):
 ```csharp
-// Controllers/ParentsController.cs (linha ~65)
+// Controllers/ParentsController.cs (linha 66)
 return Ok(new {
     parentId = parent.ParentId,
-    userId = parent.UserId,  // ← ADICIONAR
-    // ... demais campos
+    userId = parent.UserId,  // ✅ ADICIONADO
+    firstName = parent.FirstName,
+    lastName = parent.LastName,
+    email = parent.Email,
+    relationship = parent.ChildRelationship,
+    fullName = parent.FullName
 });
 ```
 
-**Nota**: `ParentService` JÁ busca o userId, apenas falta expor na API.
-
 ### Arquivos Modificados:
-- `lib/api.ts` - Tipagem com `userId?: string` (preparado para correção)
+- `lib/api.ts` - Tipagem com `userId?: string`
 - `store/parent-store.ts` - Interface `Parent` com `id` (userId) + `parentId`
+- Backend: `Controllers/ParentsController.cs` - Adicionado `userId` no retorno
 - Documentação atualizada: `BACKEND_ISSUES.md`
 
 ### Status Final:
-- ✅ **Backend endpoint**: Funcional (falta apenas userId no retorno)
+- ✅ **Backend endpoint**: Funcional e retornando userId corretamente
 - ✅ **Frontend**: Integrado e pronto
-- 🔴 **Bloqueio**: Aguardando correção backend para cadastro de crianças
-- ✅ **Workaround**: Criação via API direta funciona (com userId manual)
+- ✅ **Bloqueio RESOLVIDO**: Cadastro de crianças via interface funcionando 100%
+- ✅ **Testado**: Fluxo completo Psicólogo → Pai → Criança operacional
+
+## 🎯 Sessão 03/10/2025 - Validações Profissionais e Fluxo Completo
+
+### Melhorias Implementadas:
+
+#### 1. Remoção de Fallback Mock no Registro
+- **Arquivo**: `store/auth-store.ts` (linhas 99-117)
+- **Mudança**: Registro agora **APENAS via API** - sem fallback silencioso para mock
+- **Impacto**:
+  - ✅ Erros de API (username duplicado, etc) são exibidos ao usuário
+  - ✅ Não redireciona se registro falhar
+  - ✅ Evita estado inconsistente (mock sem token JWT válido)
+  - ✅ UX clara e transparente
+
+**Antes**:
+```typescript
+register: async (userData: any) => {
+  try {
+    const response = await api.register(userData)
+    // ... salvar usuário
+  } catch (error) {
+    console.warn("API register failed, trying mock registration:", error)
+    // ❌ Fallback silencioso para mock
+    // ❌ Redirecionava mesmo com erro
+  }
+}
+```
+
+**Depois**:
+```typescript
+register: async (userData: any) => {
+  // ✅ APENAS API - sem fallback
+  const response = await api.register(userData)
+  // Se falhar, erro é propagado ao componente
+}
+```
+
+#### 2. Validações com Zod - Sistema Profissional
+
+**Arquivos criados**:
+- `lib/validations/auth.ts` - Validações de autenticação
+- `lib/validations/child.ts` - Validações de criança
+- `lib/validations/utils.ts` - Helper para formatação de erros
+
+**Features**:
+- ✅ **Discriminated Union** para registro por role
+- ✅ Validação de confirmação de senha
+- ✅ Validação de nome completo (split por espaço)
+- ✅ Validação de data de nascimento (passado, máx 18 anos)
+- ✅ Transform functions (empty string → undefined)
+- ✅ Tipos TypeScript inferidos automaticamente
+
+**Exemplo - Registro**:
+```typescript
+// lib/validations/auth.ts
+export const registrationSchema = z.discriminatedUnion('role', [
+  psychologistRegistrationSchema,
+  parentRegistrationSchema,
+]).and(z.object({
+  confirmPassword: z.string()
+})).refine(data => data.password === data.confirmPassword, {
+  message: 'As senhas não conferem',
+  path: ['confirmPassword']
+})
+
+// app/registro/page.tsx
+const validateForm = (): string | null => {
+  const result = registrationSchema.safeParse(formData)
+  if (!result.success) {
+    const errors = formatZodErrors(result.error)
+    return Object.values(errors)[0] || "Erro de validação"
+  }
+  return null
+}
+```
+
+**Redução de código**: Validação manual ~20 linhas → Zod ~11 linhas (50% menos código)
+
+#### 3. Formatação Automática de Telefone
+
+**Arquivo criado**: `lib/utils/phone-formatter.ts`
+
+**Funcionalidades**:
+- ✅ Formatação brasileira: `(XX) XXXXX-XXXX`
+- ✅ Suporte a fixo (10 dígitos) e celular (11 dígitos)
+- ✅ Limita automaticamente a 11 dígitos
+- ✅ Remove formatação antes de enviar para API
+- ✅ Validação de número de telefone
+
+**Funções**:
+```typescript
+formatPhoneNumber(value: string): string      // 66992121234 → (66) 99212-1234
+unformatPhoneNumber(value: string): string    // (66) 99212-1234 → 66992121234
+isValidPhoneNumber(value: string): boolean    // Valida 10-11 dígitos
+```
+
+**Integração**:
+```typescript
+// app/registro/page.tsx (linha 228-231)
+<Input
+  id="contactNumber"
+  value={formData.contactNumber}
+  onChange={(e) => {
+    const formatted = formatPhoneNumber(e.target.value)
+    handleInputChange('contactNumber', formatted)
+  }}
+  placeholder="(11) 99999-9999"
+/>
+
+// Ao enviar para API (linha 105)
+contactNumber: unformatPhoneNumber(formData.contactNumber.trim()) || undefined
+```
+
+#### 4. Ajuste de Validação de Username
+
+**Mudança**: Removido regex restritivo que bloqueava espaços
+- **Antes**: `.regex(/^[a-zA-Z0-9_]+$/, 'Nome de usuário deve conter apenas letras, números e _')`
+- **Depois**: Apenas validação de tamanho (min 3, max 50 caracteres)
+- **Razão**: UX - usuário não deveria se preocupar com restrições técnicas de username
+
+#### 5. Confirmação do Fix Backend - Parent userId
+
+**Backend atualizado**: `Controllers/ParentsController.cs` agora retorna `userId`
+- ✅ Endpoint `/api/Parents/get-id-by-email` completo
+- ✅ Cadastro de crianças via interface funcionando
+- ✅ Fluxo end-to-end testado e operacional
+
+### Testes Realizados:
+
+✅ **Registro de Psicólogo**:
+- Email: `ana.psico@exemplo.com`
+- Senha: `123456`
+- Validações funcionando
+- Formatação de telefone aplicada
+- Registro bem-sucedido com token JWT
+
+✅ **Registro de Pai**:
+- Email: `carlos.pai@exemplo.com`
+- Senha: `123456`
+- Campos específicos de Parent validados
+- Registro bem-sucedido
+
+✅ **Criação de Criança**:
+- Busca de responsável por email funcionando
+- Debounce de 800ms aplicado
+- Validação em tempo real do email
+- Cadastro completo com sucesso
+- Backend retornando userId corretamente
+
+### Problemas Corrigidos na Sessão:
+
+1. ✅ **Arquivo `nul` no git** - Removido e adicionado ao `.gitignore`
+2. ✅ **Fallback mock confuso** - Removido do registro
+3. ✅ **Validações manuais** - Substituídas por Zod
+4. ✅ **Telefone sem formatação** - Formatador implementado
+5. ✅ **Username regex restritivo** - Removido
+
+### Arquivos Modificados/Criados:
+
+**Criados**:
+- `lib/validations/auth.ts`
+- `lib/validations/child.ts`
+- `lib/validations/utils.ts`
+- `lib/utils/phone-formatter.ts`
+
+**Modificados**:
+- `store/auth-store.ts` - Removido fallback mock
+- `app/registro/page.tsx` - Integração Zod + phone formatter
+- `app/criancas/nova/page.tsx` - Integração Zod
+- `.gitignore` - Adicionado `nul`
+- `BACKEND_ISSUES.md` - Marcado Parent userId como resolvido
+- `CLAUDE.md` - Atualizado com sessão 03/10/2025
+
+### Status Atual do Sistema:
+
+**Integração Backend**: 90% completo
+
+| Módulo | Status | Observações |
+|--------|--------|-------------|
+| Auth | ✅ 100% | Registro sem fallback mock |
+| Children | ✅ 100% | CRUD completo funcionando |
+| Parents | ✅ 100% | userId agora retornado corretamente |
+| Sessions | ✅ 100% | CRUD + compartilhamento |
+| Reports | ✅ 100% | Geração + PDF download |
+| Assessments | ✅ 100% | VB-MAPP completo (170 marcos) |
+| InterventionPlans | ✅ 100% | CRUD + metas |
+| Communication | 🔴 0% | **BLOQUEADO** - Erro de acesso backend |
+| Activities | ⚪ Mock | Backend não existe |
+
+**Validações**:
+- ✅ Zod implementado em Auth e Child
+- ✅ Formatação automática de telefone
+- ✅ Validação em tempo real de email
+
+**UX**:
+- ✅ Estados de loading bem implementados
+- ✅ Toast notifications consistentes
+- ✅ Feedback visual em tempo real
+- ✅ Erros de API exibidos claramente
+
+### Próximas Etapas Sugeridas:
+
+**🔴 Prioridade CRÍTICA**:
+1. Resolver bloqueio Communication endpoint (backend)
+2. Implementar endpoint `/api/Auth/me` para dados completos após refresh
+
+**🟡 Prioridade ALTA**:
+3. Migrar gráficos do dashboard para Tremor (Recharts incompatível React 19)
+4. Adicionar validação em tempo real nos formulários
+5. Integrar dados completos de responsável em listagem de crianças
+
+**🟢 Prioridade MÉDIA**:
+6. Criar camada de serviços (services/)
+7. Implementar testes unitários (Vitest)
+8. Implementar sistema de refresh token

@@ -269,33 +269,26 @@ Child → parentID (FK para Parent)
 
 **Sistema totalmente operacional com estratégia híbrida garantindo UX.**
 
-## 🐛 Problema Atual: Endpoint Parents/get-id-by-email falta userId (30/09/2025)
+## ✅ RESOLVIDO: Endpoint Parents/get-id-by-email retorna userId (03/10/2025)
 
-### ✅ Problema do Role Resolvido:
+### ✅ Problema do Role Resolvido (30/09/2025):
 - Backend corretamente aceita role "Parent" (EN)
 - Endpoint `/api/Parents/get-id-by-email` funciona e encontra responsáveis
 - Sistema cria registro na tabela `Parents` automaticamente ao registrar
 
-### 🚨 NOVO PROBLEMA CRÍTICO: userId ausente na resposta
+### ✅ PROBLEMA userId RESOLVIDO (03/10/2025):
 
 **Contexto**:
 - Endpoint implementado e funcionando: `GET /api/Parents/get-id-by-email`
-- Backend retorna: `parentId`, `firstName`, `lastName`, `email`, `relationship`, `fullName`
-- **Falta**: `userId` (necessário para criar crianças)
+- Backend AGORA retorna: `parentId`, `userId`, `firstName`, `lastName`, `email`, `relationship`, `fullName`
+- ✅ **userId incluído** (necessário para criar crianças)
 
-**Por quê é crítico**:
-```csharp
-// ChildService.CreateChildAsync espera userId, não parentId
-var primaryParent = await _userRepository.GetParentByUserIdAsync(request.PrimaryParentId);
-// ↑ Busca Parent pelo UserId do responsável
-```
-
-**Solução** (Controllers/ParentsController.cs, linha ~65):
+**Solução Implementada** (Controllers/ParentsController.cs, linha 66):
 ```csharp
 return Ok(new
 {
     parentId = parent.ParentId,
-    userId = parent.UserId,  // ← ADICIONAR ESSA LINHA
+    userId = parent.UserId,  // ✅ ADICIONADO
     firstName = parent.FirstName,
     lastName = parent.LastName,
     email = parent.Email,
@@ -304,31 +297,22 @@ return Ok(new
 });
 ```
 
-**Nota**: `ParentService.FindParentByEmailAsync()` JÁ retorna userId (linha 40), apenas o Controller não está expondo na API.
-
 ### Teste de Validação:
 
-✅ **Endpoint funcionando**:
+✅ **Endpoint retornando userId**:
 ```bash
-GET /api/Parents/get-id-by-email?email=joao.silva@example.com
-Response 200: { parentId, firstName, lastName... }
+GET /api/Parents/get-id-by-email?email=carlos.pai@exemplo.com
+Response 200: { parentId, userId, firstName, lastName... }
 ```
 
-✅ **Criação de criança funciona com userId correto**:
-```bash
-POST /api/Children
-{ primaryParentId: "62f81c66-eb3a-463b-926f-7ed0ab404f50" } # userId do parent
-Response 201: Criança criada com sucesso
-```
+✅ **Criação de criança via interface funcionando**:
+- Psicólogo busca responsável por email
+- Frontend recebe userId do backend
+- Cadastro de criança completa com sucesso
 
-❌ **Criação falha com parentId**:
-```bash
-POST /api/Children
-{ primaryParentId: "6d181ca7-0c75-4c5e-ac62-081e6b9e565f" } # parentId
-Response 400: "Responsável principal não encontrado"
-```
-
-### Status:
-- ✅ Frontend integrado e pronto
-- ⏳ Aguardando backend adicionar `userId` no retorno
-- 🔴 **Bloqueio**: Não é possível cadastrar crianças via interface sem essa correção
+### Status Final:
+- ✅ Frontend integrado e funcionando
+- ✅ Backend retornando userId corretamente
+- ✅ **Fluxo completo operacional**: Registro Psicólogo → Registro Pai → Criar Criança
+- ✅ Validações Zod implementadas
+- ✅ Formatação de telefone automática funcionando
