@@ -26,6 +26,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Windows special files
+nul
 
 # backend
 /aspct-back-end
