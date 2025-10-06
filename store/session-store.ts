@@ -167,9 +167,11 @@ function mapSessaoToSessionUpdateRequest(sessao: Partial<Sessao>): any {
 // State do store
 interface SessionState {
   sessoes: Sessao[]
+  isLoading: boolean
   isUsingMockData: boolean
 
   // Actions
+  fetchSessoes: () => Promise<void>
   fetchSessoesByCrianca: (criancaId: string) => Promise<void>
   getSessao: (id: string) => Promise<Sessao | null>
   addSessao: (novaSessao: Omit<Sessao, 'id' | 'criadoEm' | 'atualizadoEm' | 'psicologoId' | 'psicologoNome' | 'resumoParaPais'>) => Promise<void>
@@ -181,22 +183,62 @@ interface SessionState {
 // Store
 export const useSessionStore = create<SessionState>((set, get) => ({
   sessoes: [],
+  isLoading: false,
   isUsingMockData: false,
 
+  fetchSessoes: async () => {
+    set({ isLoading: true })
+
+    try {
+      // Backend não possui endpoint GET /api/Sessions
+      // Solução: Buscar crianças do psicólogo e depois buscar sessões de cada uma
+      const { api } = await import('@/lib/api')
+
+      // 1. Buscar crianças do psicólogo
+      const children = await api.getChildren()
+
+      if (children.length === 0) {
+        set({ sessoes: [], isLoading: false, isUsingMockData: false })
+        return
+      }
+
+      // 2. Buscar sessões de cada criança
+      const sessoesPorCrianca = await Promise.all(
+        children.map(child => api.getSessionsByChild(child.childId))
+      )
+
+      // 3. Consolidar todas as sessões
+      const todasSessoes = sessoesPorCrianca.flat()
+      const sessoesMapeadas = todasSessoes.map(mapSessionResponseToSessao)
+
+      // 4. Ordenar por data (mais recente primeiro)
+      sessoesMapeadas.sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())
+
+      set({ sessoes: sessoesMapeadas, isLoading: false, isUsingMockData: false })
+    } catch (error) {
+      console.warn("API fetchSessoes failed, using mock data:", error)
+
+      // Fallback para dados mock
+      await new Promise((resolve) => setTimeout(resolve, 800))
+      set({ sessoes: mockSessoes, isLoading: false, isUsingMockData: true })
+    }
+  },
+
   fetchSessoesByCrianca: async (criancaId: string) => {
+    set({ isLoading: true })
     try {
       // Tentar API real primeiro
       const sessions = await api.getSessionsByChild(criancaId)
       const sessoesMapeadas = sessions.map(mapSessionResponseToSessao)
 
-      set({ sessoes: sessoesMapeadas, isUsingMockData: false })
+      set({ sessoes: sessoesMapeadas, isLoading: false, isUsingMockData: false })
     } catch (error) {
       console.warn("API getSessionsByChild failed, using mock data:", error)
 
       // Fallback para dados mock filtrados por criança
       await new Promise((resolve) => setTimeout(resolve, 800))
       const sessoesFiltradas = mockSessoes.filter(s => s.criancaId === criancaId)
-      set({ sessoes: sessoesFiltradas, isUsingMockData: true })
+      set({ sessoes: sessoesFiltradas, isLoading: false, isUsingMockData: true })
     }
   },
 

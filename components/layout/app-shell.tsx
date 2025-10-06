@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useState, useEffect } from "react"
 import { usePathname, useRouter } from "next/navigation"
-import { BarChart3, Users, FileText, LogOut, Menu, Home, User, Settings, BookOpen } from "lucide-react"
+import { BarChart3, Users, FileText, LogOut, Menu, Home, User, Settings, BookOpen, Calendar } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useAuthStore } from "@/store/auth-store"
 import { toast } from "sonner"
@@ -58,6 +58,7 @@ export function AppShell({ children }: AppShellProps) {
       ? [
           { href: "/dashboard", label: "Dashboard", icon: Home },
           { href: "/criancas", label: "Crianças", icon: Users },
+          { href: "/sessoes", label: "Sessões", icon: Calendar },
           { href: "/relatorios", label: "Relatórios", icon: FileText },
           { href: "/atividades", label: "Atividades", icon: BookOpen },
         ]

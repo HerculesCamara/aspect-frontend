@@ -132,7 +132,11 @@ aspect-frontend/
 
 - ✅ Dashboard com métricas e progresso geral
 - ✅ Gestão completa de crianças (CRUD)
-- ✅ Registro de sessões terapêuticas com notas estruturadas
+- ✅ **Sistema de Sessões Diárias** (NOVO):
+  - Registro detalhado de sessões terapêuticas
+  - Anotações clínicas estruturadas
+  - Compartilhamento opcional com pais
+  - Estatísticas e busca avançada
 - ✅ Avaliações VB-MAPP (170 marcos em 3 níveis)
 - ✅ Criação de planos de intervenção com metas
 - ✅ Geração de relatórios automáticos (PDF)

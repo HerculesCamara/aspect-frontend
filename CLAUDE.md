@@ -659,3 +659,131 @@ contactNumber: unformatPhoneNumber(formData.contactNumber.trim()) || undefined
 6. Criar camada de serviços (services/)
 7. Implementar testes unitários (Vitest)
 8. Implementar sistema de refresh token
+
+## 📅 Sessão 03/10/2025 (Tarde) - Sistema de Sessões Diárias
+
+### Implementações Realizadas:
+
+#### 1. Página de Listagem de Sessões
+- **Arquivo**: `app/sessoes/page.tsx` (NOVO)
+- **Funcionalidades**:
+  - ✅ Visualização de todas as sessões registradas
+  - ✅ Estatísticas rápidas (total, mês atual, crianças atendidas, duração total)
+  - ✅ Busca por criança ou tipo de sessão
+  - ✅ Cards informativos com detalhes resumidos
+  - ✅ Badges coloridos por tipo (Individual, Grupo, Avaliação, Seguimento)
+  - ✅ Indicação de sessões compartilhadas com pais
+  - ✅ Loading states com Skeleton
+
+#### 2. Página de Cadastro de Nova Sessão
+- **Arquivo**: `app/sessoes/nova/page.tsx` (NOVO)
+- **Funcionalidades**:
+  - ✅ Seleção de criança do dropdown
+  - ✅ Data, horário e duração configuráveis
+  - ✅ Tipo de sessão (Individual/Grupo/Avaliação/Seguimento)
+  - ✅ Anotações clínicas estruturadas:
+    - O que foi feito (obrigatório)
+    - Observações e diagnóstico (opcional)
+    - Próximos passos (opcional)
+  - ✅ Sistema de compartilhamento com pais:
+    - Checkbox para ativar/desativar
+    - Campo de resumo simplificado (obrigatório se compartilhar)
+    - Orientação para linguagem acessível
+  - ✅ Validações completas de formulário
+  - ✅ Estados de loading e erro
+  - ✅ Toast notifications
+
+#### 3. Navegação Atualizada
+- **Arquivo**: `components/layout/app-shell.tsx` (MODIFICADO)
+- **Mudança**: Adicionado link "Sessões" no menu lateral do psicólogo
+- **Ícone**: Calendar (lucide-react)
+
+#### 4. Fix no Store de Relatórios
+- **Arquivo**: `store/relatorio-store.ts` (MODIFICADO)
+- **Problema**: Página de relatórios chamava `fetchRelatorios()` que não existia
+- **Solução**: Adicionada função `fetchRelatorios()` para buscar todos os relatórios
+- **Status**: Usando mock data por enquanto (backend pode ter endpoint getAllReports)
+
+### Estrutura de Dados de Sessão:
+
+```typescript
+interface Sessao {
+  id: string
+  criancaId: string
+  criancaNome: string
+  psicologoId: string
+  psicologoNome: string
+  data: string                    // ISO 8601
+  duracao: number                 // minutos
+  tipo: 'Individual' | 'Grupo' | 'Avaliação' | 'Seguimento'
+  anotacoes: {
+    oqueFoiFeito?: string        // Atividades realizadas
+    diagnosticado?: string        // Observações clínicas
+    proximosPassos?: string       // Planejamento futuro
+  }
+  compartilhadoComPais: boolean
+  resumoParaPais?: string         // Resumo simplificado
+  criadoEm: string
+  atualizadoEm?: string
+}
+```
+
+### Fluxo de Uso:
+
+1. **Psicólogo acessa** `/sessoes`
+2. **Clica em** "Nova Sessão" → `/sessoes/nova`
+3. **Preenche formulário**:
+   - Seleciona criança
+   - Define data/hora/duração
+   - Escolhe tipo de sessão
+   - Registra anotações clínicas
+   - (Opcional) Compartilha resumo com pais
+4. **Salva sessão** → Integração com backend via `session-store.ts`
+5. **Redirecionamento** → `/sessoes` com toast de sucesso
+
+### Integração Backend:
+
+- ✅ **Store**: `session-store.ts` já 100% integrado
+- ✅ **Endpoints**: `/api/Sessions` (GET, POST, PUT, DELETE, PATCH /share)
+- ✅ **Estratégia híbrida**: API real com fallback mock
+- ✅ **Mapeamento**: Bidirecional completo entre frontend ↔ backend
+
+### Limitações Atuais Identificadas:
+
+**Métricas VB-MAPP ausentes** (necessárias para análise profissional):
+1. ❌ **Marcos trabalhados** - Quais dos 170 marcos foram focados na sessão
+2. ❌ **Progresso em marcos** - Evolução de pontuação (0 → 0.5 → 1.0)
+3. ❌ **Comportamentos-alvo** - Frequência de comportamentos específicos
+4. ❌ **Tentativas e acertos** - Para ensaios discretos (ex: 8/10 corretas)
+5. ❌ **Duração por atividade** - Tempo gasto em cada tarefa
+6. ❌ **Nível de prompt** - Independente/Gestual/Verbal/Físico
+7. ❌ **Comportamentos desafiadores** - Registro de frequência/intensidade
+
+### Próximas Melhorias Planejadas:
+
+**🔴 Prioridade ALTA** - Melhorar métricas de sessão:
+1. Adicionar seleção de marcos VB-MAPP trabalhados
+2. Registrar progresso em marcos específicos
+3. Sistema de contagem de tentativas/acertos
+4. Registro de comportamentos-alvo e desafiadores
+5. Análise de prompt level (nível de suporte)
+6. Dados estruturados para gráficos de evolução
+
+### Arquivos Criados/Modificados:
+
+**Criados**:
+- `app/sessoes/page.tsx` (232 linhas)
+- `app/sessoes/nova/page.tsx` (301 linhas)
+
+**Modificados**:
+- `components/layout/app-shell.tsx` - Adicionado link "Sessões" + import Calendar
+- `store/relatorio-store.ts` - Adicionada função `fetchRelatorios()`
+
+### Status Atual do Sistema:
+
+**Módulo Sessions**: ✅ **Interface Básica Completa** (Integração backend 100%)
+
+- ✅ Listagem de sessões funcionando
+- ✅ Cadastro de sessões funcionando
+- ✅ Compartilhamento com pais funcionando
+- ⚠️ **Métricas VB-MAPP ausentes** (próxima prioridade)

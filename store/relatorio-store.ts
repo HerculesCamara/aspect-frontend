@@ -177,6 +177,7 @@ interface RelatorioState {
   isUsingMockData: boolean
 
   // Actions
+  fetchRelatorios: () => Promise<void>
   fetchRelatoriosByCrianca: (criancaId: string) => Promise<void>
   getRelatorio: (id: string) => Promise<Relatorio | null>
   gerarRelatorio: (dados: Omit<Relatorio, 'id' | 'psicologoId' | 'psicologoNome' | 'estatisticas' | 'titulo'>) => Promise<void>
@@ -188,6 +189,19 @@ interface RelatorioState {
 export const useRelatorioStore = create<RelatorioState>((set, get) => ({
   relatorios: [],
   isUsingMockData: false,
+
+  fetchRelatorios: async () => {
+    try {
+      // Buscar todos os relatórios (backend pode ter endpoint getAllReports)
+      // Por enquanto, usar dados mock
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+      set({ relatorios: mockRelatorios, isUsingMockData: true })
+    } catch (error) {
+      console.warn("API fetchRelatorios failed, using mock data:", error)
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+      set({ relatorios: mockRelatorios, isUsingMockData: true })
+    }
+  },
 
   fetchRelatoriosByCrianca: async (criancaId: string) => {
     try {
