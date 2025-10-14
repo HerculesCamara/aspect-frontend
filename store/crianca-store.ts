@@ -52,6 +52,7 @@ const mockCriancas: Crianca[] = [
     nome: "João Silva",
     idade: 5,
     nivelVBMAPP: "Nível 2",
+    primaryParentId: "2", // Carlos Santos (pai mock)
     progresso: {
       linguagem: 65,
       social: 58,
@@ -62,13 +63,15 @@ const mockCriancas: Crianca[] = [
     alertas: [],
     foto: "/images/criancas/joao.jpg",
     dataNascimento: "2019-03-15",
+    genero: "Masculino",
     responsavel: {
-      nome: "Maria Silva",
+      nome: "Carlos Santos",
       telefone: "(11) 99999-9999",
-      email: "maria.silva@email.com",
+      email: "carlos@exemplo.com",
       endereco: "Rua das Flores, 123 - São Paulo, SP",
     },
     informacoesMedicas: {
+      diagnostico: "TEA Nível 1",
       medicamentos: "Nenhum",
       alergias: "Lactose",
       observacoes: "Criança muito ativa e comunicativa",
@@ -79,6 +82,7 @@ const mockCriancas: Crianca[] = [
     nome: "Maria Oliveira",
     idade: 4,
     nivelVBMAPP: "Nível 1",
+    primaryParentId: "2", // Carlos Santos (pai mock) - segundo filho
     progresso: {
       linguagem: 78,
       social: 82,
@@ -89,13 +93,15 @@ const mockCriancas: Crianca[] = [
     alertas: [],
     foto: "/images/criancas/maria.jpg",
     dataNascimento: "2020-07-22",
+    genero: "Feminino",
     responsavel: {
-      nome: "Carlos Oliveira",
+      nome: "Carlos Santos",
       telefone: "(11) 88888-8888",
-      email: "carlos.oliveira@email.com",
+      email: "carlos@exemplo.com",
       endereco: "Av. Paulista, 456 - São Paulo, SP",
     },
     informacoesMedicas: {
+      diagnostico: "TEA Leve",
       medicamentos: "Vitamina D",
       alergias: "Nenhuma",
       observacoes: "Progresso excelente na comunicação",
@@ -106,6 +112,7 @@ const mockCriancas: Crianca[] = [
     nome: "Pedro Santos",
     idade: 6,
     nivelVBMAPP: "Nível 3",
+    primaryParentId: "999", // Outro responsável (não aparecerá para Carlos)
     progresso: {
       linguagem: 45,
       social: 38,
@@ -116,6 +123,7 @@ const mockCriancas: Crianca[] = [
     alertas: ["Regressão na linguagem", "Dificuldade de interação social"],
     foto: "/images/criancas/pedro.jpg",
     dataNascimento: "2018-11-08",
+    genero: "Masculino",
     responsavel: {
       nome: "Ana Santos",
       telefone: "(11) 77777-7777",
@@ -123,6 +131,7 @@ const mockCriancas: Crianca[] = [
       endereco: "Rua da Esperança, 789 - São Paulo, SP",
     },
     informacoesMedicas: {
+      diagnostico: "TEA Nível 3",
       medicamentos: "Risperidona 0.5mg",
       alergias: "Corante amarelo",
       observacoes: "Necessita acompanhamento mais intensivo",
@@ -169,6 +178,8 @@ function mapChildResponseToCrianca(child: any): Crianca {
     alertas: [], // TODO: implementar lógica de alertas baseada em assessments
     foto: undefined,
     dataNascimento: child.dateOfBirth?.split('T')[0],
+    genero: child.gender,
+    primaryParentId: child.primaryParentId, // ID do responsável
     responsavel: {
       nome: "Responsável", // TODO: buscar via primaryParentId quando endpoint estiver disponível
       telefone: "",
@@ -176,7 +187,8 @@ function mapChildResponseToCrianca(child: any): Crianca {
       endereco: "",
     },
     informacoesMedicas: {
-      medicamentos: child.diagnosis || "",
+      diagnostico: child.diagnosis || "TEA",
+      medicamentos: "",
       alergias: "",
       observacoes: `Cadastrado em: ${child.onboardingDate?.split('T')[0] || 'N/A'}`,
     },

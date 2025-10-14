@@ -290,6 +290,7 @@ interface ChildResponse {
   isActive: boolean
   assignedPsychologistId: string
   psychologistName?: string
+  primaryParentId?: string
 }
 
 interface ChildCreateRequest {

@@ -23,16 +23,21 @@ export default function MeusFilhosPage() {
     const loadData = async () => {
       await fetchCriancas()
 
-      // Filtrar apenas os filhos do usuário logado
+      // Filtrar apenas os filhos do usuário logado (pai)
+      // Comparar primaryParentId da criança com o userId do usuário logado
       const filhosDoUsuario = useCriancaStore
         .getState()
-        .criancas.filter((crianca) => crianca.responsavelId === user?.id)
+        .criancas.filter((crianca) => crianca.primaryParentId === user?.id)
 
       setMeusFilhos(filhosDoUsuario)
       setIsLoading(false)
     }
 
-    loadData()
+    if (user?.id) {
+      loadData()
+    } else {
+      setIsLoading(false)
+    }
   }, [fetchCriancas, user?.id])
 
   return (
@@ -70,17 +75,20 @@ export default function MeusFilhosPage() {
                 <CardContent className="pb-2">
                   <div className="flex items-center gap-4 mb-4">
                     <Avatar className="h-16 w-16">
-                      <AvatarImage src={`/placeholder.svg?height=64&width=64&text=${filho.nome.charAt(0)}`} />
+                      <AvatarImage src={filho.foto} />
                       <AvatarFallback>{filho.nome.charAt(0)}</AvatarFallback>
                     </Avatar>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">Terapeuta: {filho.terapeuta}</span>
+                    <div className="flex-1">
+                      <div className="text-sm text-muted-foreground">
+                        {filho.informacoesMedicas?.diagnostico || "TEA"}
                       </div>
                       <div className="flex items-center gap-2 mt-1">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">Última sessão: {filho.ultimaSessao}</span>
+                        <span className="text-sm">
+                          {filho.dataNascimento
+                            ? new Date(filho.dataNascimento).toLocaleDateString('pt-BR')
+                            : 'Data não informada'}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -90,15 +98,15 @@ export default function MeusFilhosPage() {
                       <div className="mb-1 flex items-center justify-between text-sm">
                         <span>Progresso Geral</span>
                         <div className="flex items-center">
-                          <span className="font-medium">{filho.progresso.media}%</span>
-                          {filho.progresso.tendencia === "up" ? (
+                          <span className="font-medium">{filho.progresso?.media || 0}%</span>
+                          {filho.progresso?.tendencia === "up" ? (
                             <TrendingUp className="ml-1 h-4 w-4 text-green-500" />
-                          ) : (
+                          ) : filho.progresso?.tendencia === "down" ? (
                             <TrendingDown className="ml-1 h-4 w-4 text-red-500" />
-                          )}
+                          ) : null}
                         </div>
                       </div>
-                      <Progress value={filho.progresso.media} className="h-2" />
+                      <Progress value={filho.progresso?.media || 0} className="h-2" />
                     </div>
                   </div>
                 </CardContent>
