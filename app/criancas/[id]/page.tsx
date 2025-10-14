@@ -12,7 +12,6 @@ import { useCriancaStore } from "@/store/crianca-store"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts"
 
 export default function CriancaDetalhesPage() {
   const params = useParams()
@@ -63,15 +62,6 @@ export default function CriancaDetalhesPage() {
     )
   }
 
-  // Dados para o gráfico de progresso
-  const progressData = [
-    { name: "Jan", linguagem: 30, social: 40, motor: 45 },
-    { name: "Fev", linguagem: 35, social: 43, motor: 48 },
-    { name: "Mar", linguagem: 40, social: 45, motor: 52 },
-    { name: "Abr", linguagem: 45, social: 48, motor: 55 },
-    { name: "Mai", linguagem: 50, social: 51, motor: 58 },
-    { name: "Jun", linguagem: 55, social: 53, motor: 60 },
-  ]
 
   return (
     <AppShell>
@@ -157,33 +147,10 @@ export default function CriancaDetalhesPage() {
           <Card className="md:col-span-2">
             <CardHeader>
               <CardTitle>Progresso por Domínio</CardTitle>
-              <CardDescription>Evolução nos últimos 6 meses</CardDescription>
+              <CardDescription>Níveis atuais de desenvolvimento</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart
-                    data={progressData}
-                    margin={{
-                      top: 10,
-                      right: 30,
-                      left: 0,
-                      bottom: 0,
-                    }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Area type="monotone" dataKey="linguagem" stroke="#8884d8" fill="#8884d8" name="Linguagem" />
-                    <Area type="monotone" dataKey="social" stroke="#82ca9d" fill="#82ca9d" name="Social" />
-                    <Area type="monotone" dataKey="motor" stroke="#ffc658" fill="#ffc658" name="Motor" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-
-              <div className="mt-6 space-y-4">
+              <div className="space-y-4">
                 <div>
                   <div className="mb-1 flex items-center justify-between text-sm">
                     <span>Linguagem</span>

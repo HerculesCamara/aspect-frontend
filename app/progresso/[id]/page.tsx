@@ -11,18 +11,6 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-  BarChart,
-  Bar,
-} from "recharts"
 
 export default function ProgressoPage() {
   const params = useParams()
@@ -73,29 +61,6 @@ export default function ProgressoPage() {
     )
   }
 
-  // Dados para os gráficos
-  const progressData = [
-    { name: "Jan", linguagem: 30, social: 40, motor: 45 },
-    { name: "Fev", linguagem: 35, social: 43, motor: 48 },
-    { name: "Mar", linguagem: 40, social: 45, motor: 52 },
-    { name: "Abr", linguagem: 45, social: 48, motor: 55 },
-    { name: "Mai", linguagem: 50, social: 51, motor: 58 },
-    {
-      name: "Jun",
-      linguagem: crianca.progresso.linguagem,
-      social: crianca.progresso.social,
-      motor: crianca.progresso.motor,
-    },
-  ]
-
-  const marcosData = [
-    { name: "Contato Visual", valor: 80 },
-    { name: "Imitação", valor: 65 },
-    { name: "Solicitação", valor: 70 },
-    { name: "Nomeação", valor: 55 },
-    { name: "Seguir Instruções", valor: 60 },
-    { name: "Interação Social", valor: 50 },
-  ]
 
   return (
     <AppShell>
@@ -155,33 +120,10 @@ export default function ProgressoPage() {
           <Card className="md:col-span-3">
             <CardHeader>
               <CardTitle>Progresso Geral</CardTitle>
-              <CardDescription>Evolução nos últimos 6 meses</CardDescription>
+              <CardDescription>Níveis atuais de desenvolvimento</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart
-                    data={progressData}
-                    margin={{
-                      top: 10,
-                      right: 30,
-                      left: 0,
-                      bottom: 0,
-                    }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Area type="monotone" dataKey="linguagem" stroke="#8884d8" fill="#8884d8" name="Linguagem" />
-                    <Area type="monotone" dataKey="social" stroke="#82ca9d" fill="#82ca9d" name="Social" />
-                    <Area type="monotone" dataKey="motor" stroke="#ffc658" fill="#ffc658" name="Motor" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-
-              <div className="mt-6 space-y-4">
+              <div className="space-y-4">
                 <div>
                   <div className="mb-1 flex items-center justify-between text-sm">
                     <span>Linguagem</span>
@@ -243,28 +185,7 @@ export default function ProgressoPage() {
                 <CardDescription>Progresso nos principais marcos do VB-MAPP</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={marcosData}
-                      margin={{
-                        top: 10,
-                        right: 30,
-                        left: 20,
-                        bottom: 5,
-                      }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Bar dataKey="valor" fill="#8884d8" name="Progresso (%)" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-
-                <div className="mt-6 space-y-4">
+                <div className="space-y-4">
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="rounded-lg border p-4">
                       <h3 className="font-medium mb-2">Marcos Alcançados</h3>
