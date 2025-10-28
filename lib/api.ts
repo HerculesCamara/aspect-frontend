@@ -1,5 +1,5 @@
 // API Client para comunicação com backend .NET
-const API_BASE = 'http://localhost:5175/api'
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5175/api'
 
 // Tipagens baseadas na API real
 interface LoginRequest {
