@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Calendar, Clock, Plus, Search, Users, FileText } from "lucide-react"
+import { Calendar, Clock, Plus, Search, Users, FileText, ClipboardList } from "lucide-react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 
@@ -167,11 +167,7 @@ export default function SessoesPage() {
             </Card>
           ) : (
             filteredSessoes.map((sessao) => (
-              <Card
-                key={sessao.id}
-                className="cursor-pointer hover:bg-accent/50 transition-colors"
-                onClick={() => router.push(`/sessoes/${sessao.id}`)}
-              >
+              <Card key={sessao.id}>
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div className="space-y-1">
@@ -195,7 +191,7 @@ export default function SessoesPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {sessao.anotacoes.oqueFoiFeito && (
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">
@@ -204,11 +200,24 @@ export default function SessoesPage() {
                         <p className="text-sm line-clamp-2">{sessao.anotacoes.oqueFoiFeito}</p>
                       </div>
                     )}
-                    {sessao.compartilhadoComPais && (
-                      <Badge variant="outline" className="text-xs">
-                        Compartilhado com os pais
-                      </Badge>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {sessao.compartilhadoComPais && (
+                        <Badge variant="outline" className="text-xs">
+                          Compartilhado com os pais
+                        </Badge>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          router.push(`/sessoes/${sessao.id}/prontuario`)
+                        }}
+                      >
+                        <ClipboardList className="h-4 w-4 mr-2" />
+                        Prontuário DTT
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

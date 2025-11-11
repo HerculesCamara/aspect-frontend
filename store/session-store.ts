@@ -174,6 +174,7 @@ interface SessionState {
   fetchSessoes: () => Promise<void>
   fetchSessoesByCrianca: (criancaId: string) => Promise<void>
   getSessao: (id: string) => Promise<Sessao | null>
+  getSessaoById: (id: string) => Sessao | undefined
   addSessao: (novaSessao: Omit<Sessao, 'id' | 'criadoEm' | 'atualizadoEm' | 'psicologoId' | 'psicologoNome' | 'resumoParaPais'>) => Promise<void>
   updateSessao: (id: string, dadosAtualizados: Partial<Sessao>) => Promise<void>
   deleteSessao: (id: string) => Promise<void>
@@ -254,6 +255,11 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       await new Promise((resolve) => setTimeout(resolve, 500))
       return mockSessoes.find(s => s.id === id) || null
     }
+  },
+
+  getSessaoById: (id: string) => {
+    const { sessoes } = get()
+    return sessoes.find(s => s.id === id)
   },
 
   addSessao: async (novaSessao) => {
